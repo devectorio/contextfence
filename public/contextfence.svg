@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">ContextFence</title>
+  <rect width="64" height="64" rx="15" fill="#111712"/>
+  <path d="M11 24V15a4 4 0 0 1 4-4h9M40 11h9a4 4 0 0 1 4 4v9M53 40v9a4 4 0 0 1-4 4h-9M24 53h-9a4 4 0 0 1-4-4v-9" fill="none" stroke="#b9f66d" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="32" cy="32" r="7" fill="#b9f66d"/>
+  <circle cx="32" cy="32" r="13" fill="none" stroke="#b9f66d" stroke-opacity=".18" stroke-width="4"/>
+</svg>

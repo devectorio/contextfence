@@ -1,0 +1,171 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify and package without release privileges
+    if: github.repository == 'devanchohan/contextfence'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out the tagged source
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.0.8
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 22.14.0
+          cache: pnpm
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run release preflight
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+        run: node scripts/release-check.mjs --version "${RELEASE_VERSION#v}"
+
+      - name: Pack the exact release tarball
+        shell: bash
+        run: |
+          mkdir -p release
+          npm pack --ignore-scripts --json --pack-destination release > /tmp/contextfence-pack.json
+          filename="$(node -e "const [pack] = require('/tmp/contextfence-pack.json'); process.stdout.write(pack.filename)")"
+          (
+            cd release
+            sha256sum "$filename" > "$filename.sha256"
+          )
+
+      - name: Smoke-test the packed CLI
+        shell: bash
+        run: |
+          mapfile -t tarballs < <(find release -maxdepth 1 -type f -name '*.tgz')
+          if [[ "${#tarballs[@]}" -ne 1 ]]; then
+            echo "::error::Expected exactly one release tarball."
+            exit 1
+          fi
+          smoke_directory="$(mktemp -d)"
+          npm install --ignore-scripts --prefix "$smoke_directory" "${tarballs[0]}"
+          "$smoke_directory/node_modules/.bin/contextfence" --version
+          "$smoke_directory/node_modules/.bin/contextfence" test examples/contracts/mock.boundary.yaml
+
+      - name: Upload verified release candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: npm-release-candidate
+          path: |
+            release/*.tgz
+            release/*.sha256
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Attest and publish verified bytes
+    needs: verify
+    if: github.repository == 'devanchohan/contextfence'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: npm
+    permissions:
+      attestations: write
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Download verified release candidate
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: npm-release-candidate
+          path: release
+
+      - name: Set up release Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Verify npm and candidate checksum
+        id: candidate
+        shell: bash
+        run: |
+          npm_version="$(npm --version)"
+          printf 'npm %s\n' "$npm_version"
+          NPM_VERSION="$npm_version" node -e "const [major, minor, patch] = process.env.NPM_VERSION.split('.').map(Number); if (major < 11 || (major === 11 && (minor < 5 || (minor === 5 && patch < 1)))) process.exit(1)" || {
+            echo '::error::npm 11.5.1 or newer is required for OIDC trusted publishing.'
+            exit 1
+          }
+
+          mapfile -t tarballs < <(find release -maxdepth 1 -type f -name '*.tgz')
+          if [[ "${#tarballs[@]}" -ne 1 ]]; then
+            echo "::error::Expected exactly one verified release tarball."
+            exit 1
+          fi
+          tarball="${tarballs[0]}"
+          checksum="$tarball.sha256"
+          [[ -f "$checksum" ]] || {
+            echo "::error::Release checksum is missing."
+            exit 1
+          }
+          (
+            cd release
+            sha256sum -c "$(basename "$checksum")"
+          )
+          printf 'tarball=%s\n' "$tarball" >> "$GITHUB_OUTPUT"
+          printf 'checksum=%s\n' "$checksum" >> "$GITHUB_OUTPUT"
+
+      - name: Attest the release tarball
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: ${{ steps.candidate.outputs.tarball }}
+
+      - name: Publish to npm with OIDC
+        env:
+          TARBALL: ${{ steps.candidate.outputs.tarball }}
+        run: npm publish "$TARBALL" --access public --provenance --ignore-scripts
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARBALL: ${{ steps.candidate.outputs.tarball }}
+          CHECKSUM: ${{ steps.candidate.outputs.checksum }}
+        run: >-
+          gh release create "${{ github.ref_name }}"
+          "$TARBALL"
+          "$CHECKSUM"
+          --generate-notes
+          --title "ContextFence ${{ github.ref_name }}"
+          --verify-tag
+          --repo "${{ github.repository }}"
+
+      - name: Write release summary
+        shell: bash
+        run: |
+          {
+            echo '### ContextFence ${{ github.ref_name }} published'
+            echo
+            echo '- npm package published with registry provenance'
+            echo '- npm tarball attested through GitHub artifact attestations'
+            echo '- GitHub release includes the verified tarball and SHA-256 checksum'
+          } >> "$GITHUB_STEP_SUMMARY"

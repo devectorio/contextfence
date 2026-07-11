@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.release.tsbuildinfo",
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": false,
+    "emitDeclarationOnly": true,
+    "types": ["node"],
+    "rootDir": "./src",
+    "outDir": "./dist/package/types"
+  },
+  "include": ["src/public.ts"]
+}

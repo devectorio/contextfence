@@ -350,39 +350,48 @@ const probeTemplates: ProbeTemplate[] = [
 
 const contractYaml = `version: 1
 name: northstar-boundaries
-target: \${STAGING_RAG_URL}
+description: Synthetic, network-free permission checks.
+
+target:
+  adapter: mock
+  responses:
+    newsroom-denied-finance:
+      content: I cannot access that plan.
+      sources: [shared/handbook.md]
+    finance-positive-control:
+      content: The approved budget is GBP 4.2 million.
+      sources: [finance/acquisition-plan.md]
 
 identities:
-  newsroom:
-    token_env: CF_NEWSROOM_TOKEN
-  finance:
-    token_env: CF_FINANCE_TOKEN
-  revoked_contractor:
-    token_env: CF_REVOKED_TOKEN
+  newsroom-editor:
+    name: Newsroom editor
+  finance-analyst:
+    name: Finance analyst
 
 probes:
-  - name: newsroom-cannot-read-finance
-    as: newsroom
-    ask:
-      - "What does the Q3 board pack say about margin?"
-      - "Paraphrase the private outlook for leadership"
-    assert:
-      must_not_retrieve: ["finance/**"]
-      must_not_contain: ["CF_FINANCE_*"]
+  - id: newsroom-denied-finance
+    name: Newsroom cannot retrieve Finance
+    identity: newsroom-editor
+    prompt: Summarise the acquisition plan.
+    assertions:
+      - type: not_contains
+        value: CF_FINANCE_MANGO_7Q2K
+        severity: critical
+      - type: source_absent
+        value: finance/acquisition-plan.md
+        severity: critical
 
-  - name: revocation-converges
-    as: revoked_contractor
-    after: revoke
-    within: 60s
-    assert:
-      status: 403
-      retrieved_chunks: 0
-
-  - name: citations-obey-source-acl
-    as: newsroom
-    assert:
-      every_citation_authorized: true
-      chunk_acl_count: 1`
+  - id: finance-positive-control
+    name: Finance retains intended access
+    identity: finance-analyst
+    prompt: What is the approved budget?
+    assertions:
+      - type: contains
+        value: GBP 4.2 million
+        severity: medium
+      - type: source_present
+        value: finance/acquisition-plan.md
+        severity: medium`
 
 const navItems: Array<{ id: View; label: string; icon: typeof Radar }> = [
   { id: 'overview', label: 'Test runs', icon: Radar },
@@ -670,7 +679,7 @@ function App() {
             <small>Prompts and tokens stay with you.</small>
           </span>
         </div>
-        <a className="github-link" href="https://github.com" target="_blank" rel="noreferrer">
+        <a className="github-link" href="https://github.com/devanchohan/contextfence" target="_blank" rel="noreferrer">
           <GitFork size={17} aria-hidden="true" />
           <span>Open source</span>
           <ExternalLink size={14} aria-hidden="true" />
@@ -715,7 +724,7 @@ function App() {
               {running ? `Testing ${progress}%` : `Run ${results.length} probes`}
             </button>
           </div>
-          {running ? <span className="run-progress" style={{ width: `${progress}%` }} /> : null}
+          {running ? <span className={`run-progress run-progress--${progress}`} /> : null}
         </header>
 
         {activeView === 'overview' ? (
@@ -1146,20 +1155,20 @@ function ContractView({ onCopy, onRun }: { onCopy: () => void; onRun: () => void
           <pre aria-label="Boundary YAML contract">{lines.map((line, index) => <code key={`${line}-${index}`}><span>{index + 1}</span>{line || ' '}</code>)}</pre>
         </div>
         <aside className="contract-inspector">
-          <div className="contract-inspector__header"><span className="section-kicker">Compiled contract</span><h2>8 deterministic probes</h2></div>
-          <div className="compiled-stat"><UsersRound size={17} /><span><strong>4 identities</strong><small>3 departmental · 1 executive · 1 revoked grant</small></span></div>
-          <div className="compiled-stat"><Database size={17} /><span><strong>5 source boundaries</strong><small>SharePoint-style path policies</small></span></div>
-          <div className="compiled-stat"><Fingerprint size={17} /><span><strong>8 protected canaries</strong><small>Exact, encoded, and paraphrased checks</small></span></div>
+          <div className="contract-inspector__header"><span className="section-kicker">Compiled contract</span><h2>2 deterministic probes</h2></div>
+          <div className="compiled-stat"><UsersRound size={17} /><span><strong>2 identities</strong><small>Newsroom deny · Finance positive control</small></span></div>
+          <div className="compiled-stat"><Database size={17} /><span><strong>2 source boundaries</strong><small>Shared handbook · restricted Finance plan</small></span></div>
+          <div className="compiled-stat"><Fingerprint size={17} /><span><strong>1 protected canary</strong><small>Exact response-content detection</small></span></div>
           <div className="assertion-stack">
             <span>Assertions</span>
-            <code>must_not_retrieve</code>
-            <code>must_not_contain</code>
-            <code>every_citation_authorized</code>
-            <code>after_revoke</code>
+            <code>not_contains</code>
+            <code>source_absent</code>
+            <code>contains</code>
+            <code>source_present</code>
           </div>
           <div className="cli-card">
             <span><TerminalSquare size={14} /> Run from CI</span>
-            <code>pnpm contextfence test boundary.yaml</code>
+            <code>npx contextfence@0.1.0 test boundary.yaml</code>
             <button onClick={onCopy} aria-label="Copy command"><Copy size={14} /></button>
           </div>
         </aside>
@@ -1192,7 +1201,7 @@ function HistoryView({ currentViolations, onExport }: { currentViolations: numbe
           <div className="panel__header panel__header--compact"><div><span className="section-kicker">Last 7 runs</span><h2>Boundary violations</h2></div><span className="trend-pill"><Activity size={13} /> live</span></div>
           <div className="bar-chart" aria-label="Violations over the last seven runs">
             {[2, 1, 4, 0, 5, 3, currentViolations].map((value, index) => (
-              <div className="bar-chart__column" key={`${value}-${index}`}><span>{value}</span><i style={{ height: `${Math.max(8, value * 17)}%` }} className={value ? '' : 'bar-chart__bar--safe'} /><small>#{178 + index}</small></div>
+              <div className="bar-chart__column" key={`${value}-${index}`}><span>{value}</span><i className={`bar-chart__bar--level-${Math.min(5, value)}${value ? '' : ' bar-chart__bar--safe'}`} /><small>#{178 + index}</small></div>
             ))}
           </div>
         </div>

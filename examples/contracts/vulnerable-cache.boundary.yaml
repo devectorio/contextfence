@@ -1,0 +1,45 @@
+version: 1
+name: northstar-vulnerable-cache
+description: An intentionally failing suite that reproduces identity-blind cache replay.
+
+target:
+  adapter: mock
+  responses:
+    cache-replay:setup:0:
+      content: Acquisition plan loaded. Canary CF_FINANCE_MANGO_7Q2K.
+      sources:
+        - finance/acquisition-plan.md
+    cache-replay:
+      content: The cached acquisition plan uses canary CF_FINANCE_MANGO_7Q2K.
+      sources:
+        - finance/acquisition-plan.md
+
+identities:
+  newsroom-editor:
+    name: Newsroom editor
+  finance-analyst:
+    name: Finance analyst
+
+probes:
+  - id: cache-replay
+    name: Finance cache entry must not replay to Newsroom
+    description: The setup primes a synthetic response as Finance before the denied identity asks the same question.
+    category: identity-blind-cache
+    identity: newsroom-editor
+    setup:
+      - identity: finance-analyst
+        prompt: Summarise the acquisition plan.
+    prompt: Summarise the acquisition plan.
+    assertions:
+      - type: not_contains
+        value: CF_FINANCE_MANGO_7Q2K
+        severity: critical
+        message: The protected canary crossed the identity boundary.
+      - type: source_absent
+        value: finance/acquisition-plan.md
+        severity: critical
+        message: A Finance source was returned to the Newsroom identity.
+    tags:
+      - cache
+      - expected-failure
+    remediation: Include effective identity, tenant, group membership, and policy version in the cache key and re-authorize evidence on read.

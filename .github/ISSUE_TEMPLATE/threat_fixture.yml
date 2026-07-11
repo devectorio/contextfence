@@ -1,0 +1,49 @@
+name: Threat fixture
+description: Propose a synthetic regression fixture for a RAG authorization failure mode.
+title: "fixture: "
+labels:
+  - fixture
+  - security
+body:
+  - type: textarea
+    id: threat
+    attributes:
+      label: Threat case
+      description: Describe the authorization boundary and how it can fail.
+      placeholder: A shared semantic cache replays Finance retrieval evidence to a Newsroom identity because the key omits policy state.
+    validations:
+      required: true
+
+  - type: textarea
+    id: identities
+    attributes:
+      label: Identities and protected sources
+      description: List the synthetic actors, allowed source patterns, restricted sources, and canaries.
+    validations:
+      required: true
+
+  - type: textarea
+    id: vulnerable
+    attributes:
+      label: Vulnerable trace
+      description: Explain the smallest deterministic trace that should fail.
+    validations:
+      required: true
+
+  - type: textarea
+    id: remediated
+    attributes:
+      label: Remediated trace
+      description: Explain the paired safe behavior that should pass.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: fixture-safety
+    attributes:
+      label: Fixture safety
+      options:
+        - label: Every name, source, prompt, endpoint, and canary is synthetic.
+          required: true
+        - label: The proposed verdict can be derived from objective evidence.
+          required: true

@@ -1,29 +1,83 @@
 {
   "name": "contextfence",
-  "private": true,
   "version": "0.1.0",
   "type": "module",
   "description": "Playwright for RAG permissions — prove restricted context stays restricted.",
   "license": "Apache-2.0",
+  "author": "Devector Consulting Ltd <dev@devector.io> (https://www.devector.io)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devanchohan/contextfence.git"
+  },
+  "bugs": {
+    "url": "https://github.com/devanchohan/contextfence/issues"
+  },
+  "homepage": "https://devanchohan.github.io/contextfence/",
+  "keywords": [
+    "rag",
+    "llm",
+    "security",
+    "permissions",
+    "authorization",
+    "regression-testing",
+    "ai-security",
+    "cli"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "funding": "https://www.devector.io",
+  "main": "./dist/package/index.js",
+  "types": "./dist/package/types/public.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/package/types/public.d.ts",
+      "import": "./dist/package/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "contextfence": "./dist/package/cli.js"
+  },
+  "files": [
+    "dist/package",
+    "examples/contracts",
+    "CHANGELOG.md",
+    "LICENSE",
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.txt",
+    "README.md",
+    "SECURITY.md"
+  ],
+  "sideEffects": false,
   "engines": {
     "node": ">=22.12.0"
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "pnpm run build:web && pnpm run build:package",
+    "build:web": "tsc -b && vite build",
+    "build:package": "pnpm run build:package:js && pnpm run build:package:types",
+    "build:package:js": "vite build --config vite.release.config.ts",
+    "build:package:types": "tsc -p tsconfig.release.json --pretty false",
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "notices": "node scripts/generate-third-party-notices.mjs",
+    "verify": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build",
+    "release:check": "node scripts/release-check.mjs",
+    "prepack": "pnpm run build:package"
   },
   "dependencies": {
-    "lucide-react": "1.23.0",
-    "react": "19.2.7",
-    "react-dom": "19.2.7"
+    "yaml": "2.9.0"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@fontsource-variable/manrope": "5.2.8",
+    "@fontsource/dm-mono": "5.2.7",
     "@types/node": "26.1.1",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
@@ -33,6 +87,9 @@
     "eslint-plugin-react-refresh": "0.5.3",
     "globals": "16.3.0",
     "jsdom": "29.1.1",
+    "lucide-react": "1.23.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
     "typescript": "6.0.3",
     "typescript-eslint": "8.63.0",
     "vite": "8.1.4",

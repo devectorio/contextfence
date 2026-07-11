@@ -1,0 +1,17 @@
+{
+  "name": "ContextFence",
+  "short_name": "ContextFence",
+  "description": "Playwright for RAG permissions.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f5f7f2",
+  "theme_color": "#111712",
+  "icons": [
+    {
+      "src": "contextfence.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

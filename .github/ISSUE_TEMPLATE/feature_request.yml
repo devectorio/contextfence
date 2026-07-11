@@ -1,0 +1,66 @@
+name: Feature proposal
+description: Propose a focused improvement to the open-source runner, reports, adapters, or lab.
+title: "proposal: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Strong proposals start with the boundary or workflow that is difficult to prove today. Please keep vendor-specific behavior behind an adapter.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: Who has this problem, and what permission risk or workflow is currently untestable?
+    validations:
+      required: true
+
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe observable behavior and evidence, without prescribing an implementation if possible.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Likely surface
+      options:
+        - Boundary contract or schema
+        - Target or evidence adapter
+        - Assertion engine
+        - Reporter or CI integration
+        - Demo UI
+        - Documentation or examples
+        - Unsure
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and acceptance criteria
+      description: What deterministic observation should prove this works?
+      placeholder: A probe for identity A fails when any source ID matching tenant-b/** is returned, including in citations.
+    validations:
+      required: true
+
+  - type: textarea
+    id: tradeoffs
+    attributes:
+      label: Security, privacy, and compatibility considerations
+      description: Note report sensitivity, credential handling, schema compatibility, or adapter lock-in risks.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Proposal check
+      options:
+        - label: I searched existing issues and the roadmap.
+          required: true
+        - label: The local open-source runner remains useful without a hosted service.
+          required: true

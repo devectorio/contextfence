@@ -1,0 +1,78 @@
+name: ContextFence boundary test
+description: Test a RAG target against a versioned ContextFence boundary contract.
+author: ContextFence contributors
+
+branding:
+  icon: shield
+  color: green
+
+inputs:
+  contract:
+    description: Path to the boundary contract, relative to working-directory.
+    required: false
+    default: boundary.yaml
+  target:
+    description: Optional target base URL override.
+    required: false
+    default: ""
+  format:
+    description: "Report format: pretty, json, junit, sarif, or html."
+    required: false
+    default: json
+  output:
+    description: Report path, relative to working-directory. Leave empty for stdout only.
+    required: false
+    default: contextfence-results.json
+  fail-on:
+    description: "Lowest severity that fails the step: none, low, medium, high, or critical."
+    required: false
+    default: low
+  timeout:
+    description: Per-probe timeout in milliseconds, including setup requests.
+    required: false
+    default: "30000"
+  concurrency:
+    description: Maximum number of probes to run concurrently.
+    required: false
+    default: "4"
+  dry-run:
+    description: Validate and plan the suite without calling its target.
+    required: false
+    default: "false"
+  working-directory:
+    description: Directory under the checked-out workspace in which to run.
+    required: false
+    default: .
+  version:
+    description: Exact ContextFence npm package version to execute.
+    required: false
+    default: 0.1.0
+
+outputs:
+  report:
+    description: Absolute path to the report, or an empty string when output is disabled.
+    value: ${{ steps.run.outputs.report }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+      with:
+        node-version: 22.14.0
+
+    - name: Run ContextFence
+      id: run
+      shell: bash
+      env:
+        INPUT_CONTRACT: ${{ inputs.contract }}
+        INPUT_TARGET: ${{ inputs.target }}
+        INPUT_FORMAT: ${{ inputs.format }}
+        INPUT_OUTPUT: ${{ inputs.output }}
+        INPUT_FAIL_ON: ${{ inputs.fail-on }}
+        INPUT_TIMEOUT: ${{ inputs.timeout }}
+        INPUT_CONCURRENCY: ${{ inputs.concurrency }}
+        INPUT_DRY_RUN: ${{ inputs.dry-run }}
+        INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
+        INPUT_VERSION: ${{ inputs.version }}
+      run: "${{ github.action_path }}/scripts/run-action.sh"

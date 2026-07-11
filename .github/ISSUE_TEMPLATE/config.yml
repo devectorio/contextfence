@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a vulnerability privately
+    url: https://github.com/devanchohan/contextfence/security/advisories/new
+    about: Do not disclose suspected vulnerabilities or sensitive evidence in a public issue.
+  - name: Commercial support and assessments
+    url: https://www.devector.io/contact
+    about: Talk to Devector about private deployments, support, or a RAG boundary assessment.

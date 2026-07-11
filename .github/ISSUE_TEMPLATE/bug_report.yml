@@ -1,0 +1,81 @@
+name: Bug report
+description: Report reproducible incorrect behavior using synthetic or redacted evidence.
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve ContextFence. Do not include tokens, customer data, confidential chunks, or unredacted reports. Suspected vulnerabilities belong in a private security report, not here.
+
+  - type: input
+    id: version
+    attributes:
+      label: ContextFence version
+      description: Run `contextfence --version`, or provide the commit SHA.
+      placeholder: 0.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Affected surface
+      options:
+        - CLI or contract validation
+        - Target adapter
+        - Assertion engine
+        - Reporter or exported artifact
+        - GitHub Action or CI
+        - Demo UI
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What happened?
+      description: State the observed and expected behavior.
+      placeholder: The probe passed even though the synthetic restricted source ID appeared in the evidence. I expected a high-severity failure.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include a minimal synthetic contract, command, and deterministic steps. Redact credentials and private endpoints.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS, Node.js version, install method, adapter, and any relevant CI runner.
+      placeholder: macOS 15; Node.js 22.14; pnpm; mock adapter
+    validations:
+      required: true
+
+  - type: textarea
+    id: sanitized-output
+    attributes:
+      label: Sanitized output
+      description: Paste only the smallest useful redacted excerpt. Prefer a synthetic reproduction over a production report.
+      render: text
+
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I searched for an existing issue.
+          required: true
+        - label: This report contains no credentials, confidential data, or unauthorized evidence.
+          required: true
+        - label: This is not a vulnerability disclosure that should be reported privately.
+          required: true

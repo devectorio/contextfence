@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title description">
+  <title id="title">ContextFence</title>
+  <desc id="description">Playwright for RAG permissions.</desc>
+  <defs>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(1040 80) rotate(137) scale(520 480)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#b9f66d" stop-opacity=".18"/>
+      <stop offset="1" stop-color="#b9f66d" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="line" x1="170" y1="440" x2="1020" y2="440" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#b9f66d" stop-opacity="0"/>
+      <stop offset=".2" stop-color="#b9f66d"/>
+      <stop offset=".8" stop-color="#b9f66d"/>
+      <stop offset="1" stop-color="#b9f66d" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#111712"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <g transform="translate(84 72)">
+    <path d="M0 32V8a8 8 0 0 1 8-8h24M64 0h24a8 8 0 0 1 8 8v24M96 64v24a8 8 0 0 1-8 8H64M32 96H8a8 8 0 0 1-8-8V64" fill="none" stroke="#b9f66d" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="48" cy="48" r="11" fill="#b9f66d"/>
+    <circle cx="48" cy="48" r="21" fill="none" stroke="#b9f66d" stroke-opacity=".18" stroke-width="6"/>
+  </g>
+  <text x="210" y="132" fill="#f7faf5" font-family="Arial, Helvetica, sans-serif" font-size="56" font-weight="700" letter-spacing="-3">context<tspan fill="#b9f66d">fence</tspan></text>
+  <text x="84" y="278" fill="#f7faf5" font-family="Arial, Helvetica, sans-serif" font-size="82" font-weight="700" letter-spacing="-5">Playwright for</text>
+  <text x="84" y="370" fill="#f7faf5" font-family="Arial, Helvetica, sans-serif" font-size="82" font-weight="700" letter-spacing="-5">RAG permissions.</text>
+  <path d="M84 450h1032" stroke="url(#line)" stroke-width="2"/>
+  <text x="84" y="515" fill="#aeb8b0" font-family="Arial, Helvetica, sans-serif" font-size="30">Prove restricted context stays restricted.</text>
+  <g transform="translate(872 484)">
+    <rect width="244" height="60" rx="30" fill="#b9f66d"/>
+    <circle cx="35" cy="30" r="8" fill="#172019"/>
+    <text x="58" y="39" fill="#172019" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="700">Apache-2.0</text>
+  </g>
+</svg>

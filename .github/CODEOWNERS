@@ -1,0 +1,8 @@
+* @devanchohan
+
+# Treat changes to release and security controls as explicitly owned.
+/.github/ @devanchohan
+/action.yml @devanchohan
+/Dockerfile @devanchohan
+/SECURITY.md @devanchohan
+/scripts/release-check.mjs @devanchohan

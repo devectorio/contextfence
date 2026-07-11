@@ -1,8 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap');
-
 :root {
   color-scheme: light;
-  font-family: 'Manrope', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Manrope Variable', 'Manrope', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: #172019;
   background: #eef1eb;
   font-synthesis: none;
@@ -514,6 +512,22 @@ pre {
   bottom: -1px;
   background: linear-gradient(90deg, var(--lime-strong), var(--green));
   transition: width 300ms ease;
+}
+
+.run-progress--8 {
+  width: 8%;
+}
+
+.run-progress--34 {
+  width: 34%;
+}
+
+.run-progress--72 {
+  width: 72%;
+}
+
+.run-progress--100 {
+  width: 100%;
 }
 
 .page {
@@ -1094,7 +1108,7 @@ pre {
   padding: 5px 0;
   color: var(--ink-soft);
   background: transparent;
-  font-family: 'Manrope', sans-serif;
+  font-family: 'Manrope Variable', 'Manrope', sans-serif;
   font-size: 9px;
   font-weight: 650;
   cursor: pointer;
@@ -1792,6 +1806,30 @@ pre {
   min-height: 5px;
   border-radius: 6px 6px 2px 2px;
   background: linear-gradient(#eb7d72, var(--red));
+}
+
+.bar-chart__bar--level-0 {
+  height: 8%;
+}
+
+.bar-chart__bar--level-1 {
+  height: 17%;
+}
+
+.bar-chart__bar--level-2 {
+  height: 34%;
+}
+
+.bar-chart__bar--level-3 {
+  height: 51%;
+}
+
+.bar-chart__bar--level-4 {
+  height: 68%;
+}
+
+.bar-chart__bar--level-5 {
+  height: 85%;
 }
 
 .bar-chart__column i.bar-chart__bar--safe {
