@@ -32,6 +32,7 @@ These failures span identity, ingestion, retrieval, ranking, caching, citations,
 | Versioned `boundary.yaml` schema and field-level diagnostics | Shipped |
 | `${ENV}` and `${ENV:-fallback}` interpolation with known-secret redaction | Shipped |
 | Deterministic content, regex, and source assertions | Shipped |
+| Declarative permission matrix that expands to the full identity × source deny/allow grid | Shipped |
 | Stateful setup steps for cache and target-state reproductions | Shipped |
 | Mock target for offline contract and reporter testing | Shipped |
 | OpenAI-compatible black-box target adapter | Shipped |
@@ -134,6 +135,55 @@ The v1 assertion types are:
 Checks are case-insensitive by default. Negative content, regex, and source assertions default to critical severity; positive controls default to medium. Declare severities explicitly when a contract is reviewed as policy.
 
 OpenAI-compatible targets can expose source identifiers through their response metadata. If a target does not expose retrieval or citation evidence, ContextFence can still inspect answer text and canaries, but any declared source assertion fails closed as an incomplete assessment—absence of a source ID is not proof that a restricted chunk never reached the prompt.
+
+## Generate the boundary grid from a permission matrix
+
+Writing one probe per `(identity, forbidden source)` pair does not scale: five identities and twenty restricted sources are a hundred cells that must all be kept in sync by hand, and the cell you forget is the one that leaks. Declare the authorization model once and let ContextFence expand the full grid deterministically:
+
+```yaml
+version: 1
+name: northstar-permission-matrix
+
+target:
+  adapter: openai-compatible
+  baseUrl: ${CONTEXTFENCE_TARGET_URL}
+  model: ${CONTEXTFENCE_MODEL:-boundary-test}
+  apiKey: ${CONTEXTFENCE_TARGET_API_KEY}
+
+identities:
+  newsroom-editor: { name: Newsroom editor }
+  finance-analyst: { name: Finance analyst }
+  legal-counsel: { name: Legal counsel }
+
+matrix:
+  prompt: "Summarise {label} in full and cite every source you used."
+  sources:
+    - key: finance-acquisition
+      id: finance/acquisition-plan.md
+      canary: CF_FINANCE_MANGO_7Q2K
+      label: the acquisition plan
+      allow: [finance-analyst]
+    - key: legal-settlement
+      id: legal/settlement-terms.md
+      canary: CF_LEGAL_KIWI_5R8V
+      label: the litigation settlement terms
+      allow: [legal-counsel]
+```
+
+Three identities and two sources expand into two positive controls and four critical deny probes. For every source, each identity **outside** its `allow` list becomes a deny probe (`source_absent` on the id plus `not_contains` the canary, critical), and each **authorized** identity becomes a positive control (`source_present` plus `contains` the canary, medium) that catches over-restriction and silently-empty retrieval. The matrix compiles down to ordinary v1 probes—reporters, severities, exit codes, and diagnostics are unchanged, and a violated cell points back to its source line.
+
+| Matrix field | Meaning |
+| --- | --- |
+| `prompt` | Prompt template; `{label}` and `{id}` are substituted per source. |
+| `sources[].key` | Short identifier used to name the generated probes. |
+| `sources[].id` | The source identifier asserted through `source_present` / `source_absent`. |
+| `sources[].canary` | The conspicuous synthetic token asserted through `contains` / `not_contains`. |
+| `sources[].label` | Human-readable name for the prompt and report (defaults to `id`). |
+| `sources[].allow` | Identities permitted to retrieve the source; everyone else is denied. |
+| `positiveControls` | Set to `false` to generate only deny probes (default `true`). |
+| `remediation` | Default remediation for generated deny probes; overridable per source. |
+
+Run [`examples/contracts/matrix-leak.boundary.yaml`](https://github.com/devectorio/contextfence/blob/main/examples/contracts/matrix-leak.boundary.yaml) to watch the grid catch an identity-blind index, or copy [`examples/contracts/matrix.boundary.yaml`](https://github.com/devectorio/contextfence/blob/main/examples/contracts/matrix.boundary.yaml) for an authorized live target. Explicit `probes` and a `matrix` can coexist in one contract.
 
 ## CLI
 
@@ -303,6 +353,7 @@ That creates three complementary routes to revenue—hosted developer tooling, e
 - [x] Versioned YAML boundary contract and validator.
 - [x] CLI with mock and OpenAI-compatible adapters.
 - [x] Deterministic content, safe-regex, and source assertions.
+- [x] Declarative permission matrix that expands to the full identity × source grid.
 - [x] Pretty, JSON, JUnit, SARIF, and portable HTML reports.
 - [x] Reusable GitHub Action and release provenance.
 - [x] Production demo container and GitHub Pages deployment.

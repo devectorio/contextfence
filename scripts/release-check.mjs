@@ -123,6 +123,24 @@ if (!process.argv.includes('--skip-checks')) {
   )
   run(
     'node',
+    ['dist/package/cli.js', 'test', 'examples/contracts/matrix-leak.boundary.yaml'],
+    { expectedStatus: 1 },
+  )
+  run(
+    'node',
+    ['dist/package/cli.js', 'test', 'examples/contracts/matrix.boundary.yaml', '--dry-run'],
+    {
+      env: {
+        CONTEXTFENCE_TARGET_URL: 'https://rag-staging.example.test',
+        CONTEXTFENCE_TARGET_API_KEY: 'synthetic-release-check-key',
+        CONTEXTFENCE_NEWSROOM_TOKEN: 'synthetic-newsroom-token',
+        CONTEXTFENCE_FINANCE_TOKEN: 'synthetic-finance-token',
+        CONTEXTFENCE_LEGAL_TOKEN: 'synthetic-legal-token',
+      },
+    },
+  )
+  run(
+    'node',
     ['dist/package/cli.js', 'test', 'examples/contracts/openai-compatible.boundary.yaml', '--dry-run'],
     {
       env: {

@@ -24,7 +24,14 @@ export interface ValidationIssue {
 interface ValidationResult {
   contract: BoundaryContract;
   issues: ValidationIssue[];
+  /** YAML node path for each probe in contract.probes, aligned by index. */
+  probePaths: ReadonlyArray<readonly (string | number)[]>;
 }
+
+const MAX_MATRIX_SOURCES = 500;
+const MAX_GENERATED_PROBES = 1_000;
+const DEFAULT_MATRIX_REMEDIATION =
+  "Filter retrieval by the effective identity before ranking, caching, prompting, and citation generation.";
 
 const SEVERITIES = new Set<BoundarySeverity>([
   "low",
@@ -60,6 +67,194 @@ function defaultSeverity(type: BoundaryAssertionType): BoundarySeverity {
   return type === "not_contains" || type === "not_matches" || type === "source_absent"
     ? "critical"
     : "medium";
+}
+
+type IssueReporter = (
+  path: readonly (string | number)[],
+  message: string,
+  code: string,
+) => void;
+
+interface MatrixHelpers {
+  record: (input: unknown, path: readonly (string | number)[]) => Record<string, unknown>;
+  knownKeys: (
+    input: Record<string, unknown>,
+    allowed: readonly string[],
+    path: readonly (string | number)[],
+  ) => void;
+  requiredString: (input: unknown, path: readonly (string | number)[], label: string) => string;
+  optionalString: (
+    input: unknown,
+    path: readonly (string | number)[],
+    label: string,
+  ) => string | undefined;
+  identifier: (input: unknown, path: readonly (string | number)[], label: string) => string;
+}
+
+/**
+ * Expand a declarative authorization matrix into deterministic probes. For every source, each
+ * identity outside its `allow` list yields a critical deny probe (source_absent + not_contains
+ * canary); each authorized identity yields a medium positive-control probe. The matrix is a
+ * source-level convenience that compiles down to ordinary v1 probes—the runner never sees it.
+ */
+function expandMatrix(
+  rawMatrix: unknown,
+  identities: Record<string, BoundaryIdentity>,
+  probes: BoundaryProbe[],
+  probePaths: Array<readonly (string | number)[]>,
+  probeIds: Set<string>,
+  issue: IssueReporter,
+  helpers: MatrixHelpers,
+): void {
+  const { record, knownKeys, requiredString, optionalString, identifier } = helpers;
+  const matrixPath = ["matrix"] as const;
+  const matrix = record(rawMatrix, matrixPath);
+  knownKeys(matrix, ["prompt", "sources", "positiveControls", "remediation"], matrixPath);
+
+  const promptTemplate = requiredString(matrix.prompt, [...matrixPath, "prompt"], "matrix.prompt");
+  const matrixRemediation = optionalString(
+    matrix.remediation,
+    [...matrixPath, "remediation"],
+    "remediation",
+  );
+
+  let positiveControls = true;
+  if (matrix.positiveControls !== undefined) {
+    if (typeof matrix.positiveControls !== "boolean") {
+      issue([...matrixPath, "positiveControls"], "positiveControls must be a boolean.", "TYPE_BOOLEAN");
+    } else {
+      positiveControls = matrix.positiveControls;
+    }
+  }
+
+  const identityIds = Object.keys(identities);
+
+  if (!Array.isArray(matrix.sources)) {
+    issue([...matrixPath, "sources"], "matrix.sources must be a sequence.", "TYPE_SEQUENCE");
+    return;
+  }
+  if (matrix.sources.length === 0) {
+    issue([...matrixPath, "sources"], "matrix.sources must define at least one source.", "REQUIRED");
+    return;
+  }
+  if (matrix.sources.length > MAX_MATRIX_SOURCES) {
+    issue(
+      [...matrixPath, "sources"],
+      `At most ${MAX_MATRIX_SOURCES} matrix sources are allowed.`,
+      "RESOURCE_LIMIT",
+    );
+    return;
+  }
+
+  const seenKeys = new Set<string>();
+  for (const [sourceIndex, rawSource] of matrix.sources.entries()) {
+    const sourcePath = [...matrixPath, "sources", sourceIndex] as const;
+    const source = record(rawSource, sourcePath);
+    knownKeys(source, ["key", "id", "canary", "label", "allow", "remediation"], sourcePath);
+    const key = identifier(source.key, [...sourcePath, "key"], "matrix source key");
+    if (key) {
+      if (seenKeys.has(key)) {
+        issue([...sourcePath, "key"], "matrix source key is duplicated.", "DUPLICATE_ID");
+      }
+      seenKeys.add(key);
+    }
+    const id = requiredString(source.id, [...sourcePath, "id"], "id");
+    const canary = requiredString(source.canary, [...sourcePath, "canary"], "canary");
+    const label = optionalString(source.label, [...sourcePath, "label"], "label") ?? id;
+    const sourceRemediation = optionalString(
+      source.remediation,
+      [...sourcePath, "remediation"],
+      "remediation",
+    );
+
+    const allow = new Set<string>();
+    if (source.allow !== undefined) {
+      if (!Array.isArray(source.allow)) {
+        issue([...sourcePath, "allow"], "allow must be a sequence of identity ids.", "TYPE_SEQUENCE");
+      } else {
+        for (const [allowIndex, rawAllow] of source.allow.entries()) {
+          const allowedId = requiredString(rawAllow, [...sourcePath, "allow", allowIndex], "identity");
+          if (allowedId && !Object.hasOwn(identities, allowedId)) {
+            issue([...sourcePath, "allow", allowIndex], "Referenced identity is not defined.", "UNKNOWN_IDENTITY");
+          } else if (allowedId) {
+            allow.add(allowedId);
+          }
+        }
+      }
+    }
+    if (!key || !id || !canary) continue;
+
+    const prompt = promptTemplate.split("{label}").join(label).split("{id}").join(id);
+
+    for (const identityId of identityIds) {
+      const denied = !allow.has(identityId);
+      if (!denied && !positiveControls) continue;
+      const probeId = `matrix-${key}-${identityId}-${denied ? "deny" : "allow"}`;
+      if (!IDENTIFIER.test(probeId)) {
+        issue(
+          [...sourcePath, "key"],
+          `Generated probe id "${probeId}" exceeds identifier limits; shorten the source key or identity id.`,
+          "INVALID_IDENTIFIER",
+        );
+        continue;
+      }
+      if (probeIds.has(probeId)) {
+        issue(
+          [...sourcePath, "key"],
+          `Generated probe id "${probeId}" collides with an existing probe.`,
+          "DUPLICATE_ID",
+        );
+        continue;
+      }
+      probeIds.add(probeId);
+      const identityName = identities[identityId].name;
+      probes.push(
+        denied
+          ? {
+              id: probeId,
+              name: `${identityName} must not retrieve ${label}`,
+              description: `Denied identity ${identityId} must receive neither ${id} nor its canary.`,
+              category: "matrix-deny",
+              identity: identityId,
+              prompt,
+              setup: [],
+              assertions: [
+                { type: "source_absent", value: id, severity: "critical", caseSensitive: false },
+                {
+                  type: "not_contains",
+                  value: canary,
+                  severity: "critical",
+                  caseSensitive: false,
+                  message: `Protected canary for ${id} crossed the boundary to ${identityId}.`,
+                },
+              ],
+              tags: ["matrix", "deny"],
+              remediation: sourceRemediation ?? matrixRemediation ?? DEFAULT_MATRIX_REMEDIATION,
+            }
+          : {
+              id: probeId,
+              name: `${identityName} can retrieve ${label}`,
+              description: `Authorized identity ${identityId} should retrieve ${id}.`,
+              category: "matrix-allow",
+              identity: identityId,
+              prompt,
+              setup: [],
+              assertions: [
+                { type: "source_present", value: id, severity: "medium", caseSensitive: false },
+                {
+                  type: "contains",
+                  value: canary,
+                  severity: "medium",
+                  caseSensitive: false,
+                  message: `Authorized identity ${identityId} did not receive ${id}; check for over-restriction or empty retrieval.`,
+                },
+              ],
+              tags: ["matrix", "allow"],
+            },
+      );
+      probePaths.push(sourcePath);
+    }
+  }
 }
 
 /** Validate and normalize the public v1 schema. The issue paths map directly to YAML nodes. */
@@ -194,7 +389,7 @@ export function validateBoundaryContractValue(value: unknown): ValidationResult 
   if (visitedValues > 20_000) {
     issue([], "Contract exceeds the 20000-value limit.", "RESOURCE_LIMIT");
   }
-  knownKeys(root, ["version", "name", "description", "target", "identities", "probes"], []);
+  knownKeys(root, ["version", "name", "description", "target", "identities", "probes", "matrix"], []);
 
   const rawVersion = root.version;
   if (rawVersion !== 1 && rawVersion !== BOUNDARY_CONTRACT_VERSION) {
@@ -358,10 +553,11 @@ export function validateBoundaryContractValue(value: unknown): ValidationResult 
   }
 
   const probes: BoundaryProbe[] = [];
+  const probePaths: Array<readonly (string | number)[]> = [];
   const probeIds = new Set<string>();
-  if (!Array.isArray(root.probes)) {
+  if (root.probes !== undefined && !Array.isArray(root.probes)) {
     issue(["probes"], "probes must be a sequence.", "TYPE_SEQUENCE");
-  } else {
+  } else if (Array.isArray(root.probes)) {
     if (root.probes.length > 1_000) {
       issue(["probes"], "At most 1000 probes are allowed.", "RESOURCE_LIMIT");
     }
@@ -556,9 +752,26 @@ export function validateBoundaryContractValue(value: unknown): ValidationResult 
         tags,
         ...(remediation ? { remediation } : {}),
       });
+      probePaths.push(probePath);
     }
   }
-  if (probes.length === 0) issue(["probes"], "At least one probe is required.", "REQUIRED");
+
+  if (root.matrix !== undefined) {
+    expandMatrix(root.matrix, identities, probes, probePaths, probeIds, issue, {
+      record,
+      knownKeys,
+      requiredString,
+      optionalString,
+      identifier,
+    });
+  }
+
+  if (probes.length === 0) {
+    issue(["probes"], "Provide at least one probe or a non-empty matrix block.", "REQUIRED");
+  }
+  if (probes.length > MAX_GENERATED_PROBES) {
+    issue([], `At most ${MAX_GENERATED_PROBES} probes (including matrix expansion) are allowed.`, "RESOURCE_LIMIT");
+  }
 
   if (target.adapter === "mock" && Object.keys(target.responses).length > 0) {
     const fallback = Object.hasOwn(target.responses, "*");
@@ -593,6 +806,7 @@ export function validateBoundaryContractValue(value: unknown): ValidationResult 
       probes,
     },
     issues,
+    probePaths,
   };
 }
 
