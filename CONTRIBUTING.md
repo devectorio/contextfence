@@ -15,7 +15,7 @@ ContextFence is early-stage. Small, focused contributions with a clear threat ca
 
 Requirements:
 
-- Node.js 22.12 or newer
+- Node.js 22.14 or newer
 - pnpm 11.0.8
 
 ```bash
