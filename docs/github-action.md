@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Validate the deterministic boundary suite
-        uses: devanchohan/contextfence@v0.1.0
+        uses: devectorio/contextfence@v0.1.0
         with:
           contract: examples/contracts/mock.boundary.yaml
           version: 0.1.0
@@ -68,7 +68,7 @@ jobs:
           persist-credentials: false
 
       - name: Test the protected staging target
-        uses: devanchohan/contextfence@v0.1.0
+        uses: devectorio/contextfence@v0.1.0
         env:
           CONTEXTFENCE_TARGET_URL: https://rag-staging.example.com
           CONTEXTFENCE_TARGET_API_KEY: ${{ secrets.CONTEXTFENCE_TARGET_API_KEY }}
@@ -117,7 +117,7 @@ steps:
   - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
   - name: Run ContextFence
-    uses: devanchohan/contextfence@v0.1.0
+    uses: devectorio/contextfence@v0.1.0
     with:
       contract: boundaries/staging.yaml
       version: 0.1.0

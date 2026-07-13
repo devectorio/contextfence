@@ -440,7 +440,7 @@ export async function runBoundaryContract(
     tool: {
       name: "ContextFence",
       version: CONTEXTFENCE_VERSION,
-      informationUri: "https://github.com/devanchohan/contextfence",
+      informationUri: "https://github.com/devectorio/contextfence",
     },
     summary: {
       status,

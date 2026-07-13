@@ -6,7 +6,7 @@ ContextFence is an open-source regression harness for proving that people, teams
 
 Write an identity boundary as YAML, run it against an OpenAI-compatible RAG endpoint, and fail CI when a response or citation crosses the line. ContextFence uses deterministic assertions over observable content and source IDs; it does not ask one model to judge another model's safety.
 
-[Try the synthetic regression lab](https://devanchohan.github.io/contextfence/) · [Read the Action guide](docs/github-action.md) · [Explore the architecture](docs/architecture.md)
+[Try the synthetic regression lab](https://devectorio.github.io/contextfence/) · [Read the Action guide](docs/github-action.md) · [Explore the architecture](docs/architecture.md)
 
 ![ContextFence — prove restricted context stays restricted](public/og.svg)
 
@@ -52,7 +52,7 @@ Requirements: Node.js 22.12 or newer.
 Clone the repository to get the example contracts, then run the network-free passing suite without installing globally:
 
 ```bash
-git clone https://github.com/devanchohan/contextfence.git
+git clone https://github.com/devectorio/contextfence.git
 cd contextfence
 npx --yes contextfence@0.1.0 test examples/contracts/mock.boundary.yaml
 ```
@@ -189,7 +189,7 @@ permissions:
 
 steps:
   - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-  - uses: devanchohan/contextfence@v0.1.0
+  - uses: devectorio/contextfence@v0.1.0
     with:
       contract: examples/contracts/mock.boundary.yaml
       version: 0.1.0
@@ -203,7 +203,7 @@ See [the complete GitHub Action guide](docs/github-action.md) for inputs, protec
 
 ## Interactive lab
 
-The [hosted demo](https://devanchohan.github.io/contextfence/) models a synthetic media company with Newsroom, Finance, Legal, Executive, and shared sources. It can:
+The [hosted demo](https://devectorio.github.io/contextfence/) models a synthetic media company with Newsroom, Finance, Legal, Executive, and shared sources. It can:
 
 - Toggle filter-after-retrieval, identity-blind cache, stale ACL, and mixed-security chunk faults.
 - Inspect an identity-by-source access matrix.
@@ -229,9 +229,9 @@ Open [http://localhost:5173](http://localhost:5173).
 The demo also ships as a non-root static container on port `8080`:
 
 ```bash
-docker pull ghcr.io/devanchohan/contextfence:0.1.0
+docker pull ghcr.io/devectorio/contextfence:0.1.0
 docker run --rm --read-only --tmpfs /tmp -p 8080:8080 \
-  ghcr.io/devanchohan/contextfence:0.1.0
+  ghcr.io/devectorio/contextfence:0.1.0
 ```
 
 Release images target `linux/amd64` and `linux/arm64` and include SBOM and provenance metadata. See [deployment guidance](docs/deployment.md) for hardened runtime flags, base paths, Pages, and custom domains.

@@ -14,7 +14,7 @@ concurrency:
 jobs:
   verify:
     name: Verify and package without release privileges
-    if: github.repository == 'devanchohan/contextfence'
+    if: github.repository == 'devectorio/contextfence'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -84,7 +84,7 @@ jobs:
   publish:
     name: Attest and publish verified bytes
     needs: verify
-    if: github.repository == 'devanchohan/contextfence'
+    if: github.repository == 'devectorio/contextfence'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: npm

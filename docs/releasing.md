@@ -5,7 +5,7 @@ ContextFence publishes four coordinated surfaces:
 1. The `contextfence` npm CLI.
 2. The composite GitHub Action in the repository tag.
 3. A GitHub Release containing the npm tarball and SHA-256 checksum.
-4. A multi-architecture demo image at `ghcr.io/devanchohan/contextfence`.
+4. A multi-architecture demo image at `ghcr.io/devectorio/contextfence`.
 
 The hosted demo deploys from `main` independently through GitHub Pages.
 
@@ -13,14 +13,14 @@ The hosted demo deploys from `main` independently through GitHub Pages.
 
 Complete these controls before creating a release tag:
 
-- Make `devanchohan/contextfence` public so npm provenance can link the public source and workflow.
+- Make `devectorio/contextfence` public so npm provenance can link the public source and workflow.
 - Enable GitHub Actions and allow workflows to create packages and releases through `GITHUB_TOKEN`.
 - Create a GitHub environment named `npm`. Add required reviewers if the account plan supports them.
 - Configure Pages to use **GitHub Actions** as its source.
 - Enable private vulnerability reporting, Dependabot alerts, secret scanning, and code scanning.
 - Protect `main`, require CI and CodeQL, and prevent force pushes.
 - Add a tag ruleset for `v*` that limits tag creation and deletion to maintainers.
-- After its first push, make the `ghcr.io/devanchohan/contextfence` package public.
+- After its first push, make the `ghcr.io/devectorio/contextfence` package public.
 
 The workflows require no custom repository token. They use the job-scoped `GITHUB_TOKEN` for GitHub and an OIDC identity for npm.
 
@@ -47,7 +47,7 @@ Install npm 11.15 or newer locally, then bind the existing package to the exact 
 
 ```bash
 npm trust github contextfence \
-  --repo devanchohan/contextfence \
+  --repo devectorio/contextfence \
   --file release.yml \
   --env npm \
   --allow-publish
@@ -84,7 +84,7 @@ Review before tagging:
 - [ ] The packed tarball contains only intended runtime files.
 - [ ] `CHANGELOG.md`, README examples, Action docs, and migration notes agree.
 - [ ] CI, CodeQL, dependency review, and container build are green on the release commit.
-- [ ] The npm trusted publisher still names `devanchohan/contextfence`, `release.yml`, environment `npm`, and allows `npm publish`.
+- [ ] The npm trusted publisher still names `devectorio/contextfence`, `release.yml`, environment `npm`, and allows `npm publish`.
 - [ ] No npm token is configured in repository or environment secrets.
 
 ## Publish
@@ -123,11 +123,11 @@ npm install --prefix "$verify_directory" contextfence@0.1.0
 "$verify_directory/node_modules/.bin/contextfence" --version
 "$verify_directory/node_modules/.bin/contextfence" test examples/contracts/mock.boundary.yaml
 
-gh release view v0.1.0 --repo devanchohan/contextfence
-gh attestation verify contextfence-0.1.0.tgz --repo devanchohan/contextfence
+gh release view v0.1.0 --repo devectorio/contextfence
+gh attestation verify contextfence-0.1.0.tgz --repo devectorio/contextfence
 
-docker pull ghcr.io/devanchohan/contextfence:0.1.0
-docker inspect ghcr.io/devanchohan/contextfence:0.1.0
+docker pull ghcr.io/devectorio/contextfence:0.1.0
+docker inspect ghcr.io/devectorio/contextfence:0.1.0
 ```
 
 Also confirm the npm provenance link resolves to the tagged public workflow and that the GitHub Pages deployment loads assets beneath `/contextfence/`.

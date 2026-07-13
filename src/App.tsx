@@ -679,7 +679,7 @@ function App() {
             <small>Prompts and tokens stay with you.</small>
           </span>
         </div>
-        <a className="github-link" href="https://github.com/devanchohan/contextfence" target="_blank" rel="noreferrer">
+        <a className="github-link" href="https://github.com/devectorio/contextfence" target="_blank" rel="noreferrer">
           <GitFork size={17} aria-hidden="true" />
           <span>Open source</span>
           <ExternalLink size={14} aria-hidden="true" />

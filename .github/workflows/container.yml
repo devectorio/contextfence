@@ -60,7 +60,7 @@ jobs:
     name: Build and publish trusted ref
     if: >-
       github.event_name != 'pull_request' &&
-      github.repository == 'devanchohan/contextfence' &&
+      github.repository == 'devectorio/contextfence' &&
       (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 30

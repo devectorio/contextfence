@@ -7,12 +7,12 @@
   "author": "Devector Consulting Ltd <dev@devector.io> (https://www.devector.io)",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/devanchohan/contextfence.git"
+    "url": "git+https://github.com/devectorio/contextfence.git"
   },
   "bugs": {
-    "url": "https://github.com/devanchohan/contextfence/issues"
+    "url": "https://github.com/devectorio/contextfence/issues"
   },
-  "homepage": "https://devanchohan.github.io/contextfence/",
+  "homepage": "https://devectorio.github.io/contextfence/",
   "keywords": [
     "rag",
     "llm",

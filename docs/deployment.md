@@ -11,7 +11,7 @@ One-time setup:
 1. Open repository **Settings → Pages**.
 2. Choose **GitHub Actions** as the source.
 3. Run **Deploy demo to GitHub Pages** or push to `main`.
-4. Verify the environment URL and the browser console at `https://devanchohan.github.io/contextfence/`.
+4. Verify the environment URL and the browser console at `https://devectorio.github.io/contextfence/`.
 
 No Pages secret is required. The deployment job receives only `pages: write` and `id-token: write`; the build job uses public source and locked dependencies.
 
@@ -44,8 +44,8 @@ docker build \
 The GHCR workflow publishes multi-architecture images from `main` and semantic-version tags:
 
 ```bash
-docker pull ghcr.io/devanchohan/contextfence:0.1.0
-docker run --rm -p 8080:8080 ghcr.io/devanchohan/contextfence:0.1.0
+docker pull ghcr.io/devectorio/contextfence:0.1.0
+docker run --rm -p 8080:8080 ghcr.io/devectorio/contextfence:0.1.0
 ```
 
 GHCR packages are private on first creation in some repository configurations. Make the package public after the first successful push and link it to the repository.

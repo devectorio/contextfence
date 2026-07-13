@@ -28,5 +28,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Machine-readable reports minimize request headers and support safe, synthetic reproduction workflows.
 - Release automation uses short-lived OIDC credentials instead of a long-lived npm publishing token after the one-time package bootstrap.
 
-[Unreleased]: https://github.com/devanchohan/contextfence/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/devanchohan/contextfence/releases/tag/v0.1.0
+[Unreleased]: https://github.com/devectorio/contextfence/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/devectorio/contextfence/releases/tag/v0.1.0

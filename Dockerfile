@@ -12,14 +12,14 @@ COPY public ./public
 COPY src ./src
 
 ARG VITE_BASE=/
-ARG VITE_SITE_URL=https://devanchohan.github.io/contextfence/
+ARG VITE_SITE_URL=https://devectorio.github.io/contextfence/
 RUN pnpm typecheck && VITE_SITE_URL="${VITE_SITE_URL}" pnpm exec vite build --base="${VITE_BASE}"
 
 FROM nginxinc/nginx-unprivileged:1.28-alpine@sha256:7377697a821c131a924a7105fafbe7414db4e9fcc77a6f08f776f33f141ec3f8 AS runtime
 
 LABEL org.opencontainers.image.title="ContextFence" \
       org.opencontainers.image.description="RAG permission boundary regression lab" \
-      org.opencontainers.image.source="https://github.com/devanchohan/contextfence" \
+      org.opencontainers.image.source="https://github.com/devectorio/contextfence" \
       org.opencontainers.image.licenses="Apache-2.0"
 
 COPY --chown=101:101 docker/nginx.conf /etc/nginx/conf.d/default.conf
