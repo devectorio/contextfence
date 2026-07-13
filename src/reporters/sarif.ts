@@ -14,14 +14,40 @@ function fnv1a(value: string): string {
   return hash.toString(16).padStart(16, "0");
 }
 
+function isAsciiLetterOrDigit(value: string): boolean {
+  const code = value.charCodeAt(0);
+  return (
+    (code >= 48 && code <= 57) ||
+    (code >= 65 && code <= 90) ||
+    (code >= 97 && code <= 122)
+  );
+}
+
+function isRuleIdCharacter(value: string): boolean {
+  return isAsciiLetterOrDigit(value) || value === "." || value === "_" || value === "-";
+}
+
 function ruleIdBase(value: string): string {
-  const normalized = value
-    .trim()
-    .replace(/[^a-zA-Z0-9._-]+/g, "-")
-    .replace(/^-+/, "")
-    .replace(/-+$/, "");
+  let normalized = "";
+  let replacingInvalidRun = false;
+  for (const character of value.trim()) {
+    if (isRuleIdCharacter(character)) {
+      normalized += character;
+      replacingInvalidRun = false;
+    } else if (!replacingInvalidRun) {
+      normalized += "-";
+      replacingInvalidRun = true;
+    }
+  }
+
+  let start = 0;
+  let end = normalized.length;
+  while (normalized.charAt(start) === "-") start += 1;
+  while (end > start && normalized.charAt(end - 1) === "-") end -= 1;
+  normalized = normalized.slice(start, end);
+
   if (!normalized) return "contextfence-result";
-  return /^[a-zA-Z0-9]/.test(normalized)
+  return isAsciiLetterOrDigit(normalized)
     ? normalized
     : `contextfence-${normalized}`;
 }

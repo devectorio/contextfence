@@ -288,6 +288,22 @@ describe("SARIF reporter", () => {
       ),
     ).toEqual(["9.5", "8.0", "5.5", "2.0", "0.0"]);
   });
+
+  it("normalizes long separator runs without retaining invalid rule IDs", () => {
+    const hyphenHeavyId = `${"-".repeat(20_000)}probe${"-".repeat(20_000)}`;
+    const parsed = JSON.parse(
+      toSarif(
+        fixtureReport([
+          {
+            ...baseResult,
+            id: hyphenHeavyId,
+          },
+        ]),
+      ),
+    ) as { runs: Array<{ results: Array<{ ruleId: string }> }> };
+
+    expect(parsed.runs[0].results[0].ruleId).toBe("probe");
+  });
 });
 
 describe("HTML reporter", () => {
