@@ -15,11 +15,11 @@ Complete these controls before creating a release tag:
 
 - Make `devectorio/contextfence` public so npm provenance can link the public source and workflow.
 - Enable GitHub Actions and allow workflows to create packages and releases through `GITHUB_TOKEN`.
-- Create a GitHub environment named `npm`. Add required reviewers if the account plan supports them.
+- Create a GitHub environment named `npm`. For unattended trusted publishing, keep it free of required reviewers: the exact repository, workflow file, environment name, protected release tag, and passing release checks are the authorization boundary. If you add reviewers later, document the manual approval step before relying on it.
 - Configure Pages to use **GitHub Actions** as its source.
 - Enable private vulnerability reporting, Dependabot alerts, secret scanning, and code scanning.
-- Protect `main`, require CI and CodeQL, and prevent force pushes.
-- Add a tag ruleset for `v*` that limits tag creation and deletion to maintainers.
+- Protect `main`, require CI and CodeQL, require resolution of pull-request conversations, and prevent force pushes and deletion.
+- Add a tag ruleset for `v*` that prevents deletion and non-fast-forward updates. Treat creation of a release tag as a maintainer-only operation and review it against this runbook.
 - After its first push, make the `ghcr.io/devectorio/contextfence` package public.
 
 The workflows require no custom repository token. They use the job-scoped `GITHUB_TOKEN` for GitHub and an OIDC identity for npm.
