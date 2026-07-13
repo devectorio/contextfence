@@ -38,7 +38,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "contextfence": "./dist/package/cli.js"
+    "contextfence": "dist/package/cli.js"
   },
   "files": [
     "dist/package",

@@ -74,7 +74,9 @@ if (packageJson.publishConfig?.access !== 'public') fail('package.json publishCo
 if (!Array.isArray(packageJson.files) || packageJson.files.length === 0) {
   fail('package.json must use a files allowlist')
 }
-if (!packageJson.bin.contextfence) fail('package.json must expose the contextfence executable')
+if (packageJson.bin.contextfence !== 'dist/package/cli.js') {
+  fail('package.json must expose contextfence through the npm-canonical dist/package/cli.js path')
+}
 
 const expectedTag = `v${version}`
 if (process.env.GITHUB_REF_TYPE === 'tag' && process.env.GITHUB_REF_NAME !== expectedTag) {
