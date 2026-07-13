@@ -6,9 +6,9 @@ ContextFence is an open-source regression harness for proving that people, teams
 
 Write an identity boundary as YAML, run it against an OpenAI-compatible RAG endpoint, and fail CI when a response or citation crosses the line. ContextFence uses deterministic assertions over observable content and source IDs; it does not ask one model to judge another model's safety.
 
-[Try the synthetic regression lab](https://devectorio.github.io/contextfence/) · [Read the Action guide](docs/github-action.md) · [Explore the architecture](docs/architecture.md)
+[Try the synthetic regression lab](https://devectorio.github.io/contextfence/) · [Read the Action guide](https://github.com/devectorio/contextfence/blob/main/docs/github-action.md) · [Explore the architecture](https://github.com/devectorio/contextfence/blob/main/docs/architecture.md)
 
-![ContextFence — prove restricted context stays restricted](public/og.svg)
+![ContextFence — prove restricted context stays restricted](https://devectorio.github.io/contextfence/og.svg)
 
 > [!WARNING]
 > Run live suites only against systems and data you own or are explicitly authorized to test. Contracts, prompts, source IDs, and generated reports can be sensitive. Use short-lived test identities, keep credentials in environment variables, start in staging, restrict runner egress, and never expose live secrets to pull-request-controlled code.
@@ -25,7 +25,7 @@ A final answer can look correctly redacted after the system has already crossed 
 
 These failures span identity, ingestion, retrieval, ranking, caching, citations, and generation. Unit-testing any single layer is not enough. ContextFence makes the end-to-end boundary reviewable, repeatable, and portable across CI, scheduled staging checks, and incident reproduction.
 
-## What ships in v0.1.0
+## What is in the v0.1.0 release candidate
 
 | Capability | Status |
 | --- | --- |
@@ -37,20 +37,20 @@ These failures span identity, ingestion, retrieval, ranking, caching, citations,
 | OpenAI-compatible black-box target adapter | Shipped |
 | Pretty, JSON, JUnit, SARIF, and portable HTML reports | Shipped |
 | Severity thresholds, bounded concurrency, aggregate probe timeouts, and explicit exit codes | Shipped |
-| Reusable, exact-version GitHub Action | Shipped |
+| Reusable GitHub Action source (exact-version Action after the first tag) | Ready in source |
 | Interactive vulnerable/remediated browser lab | Shipped |
 | Non-root production container and GitHub Pages deployment | Shipped |
 | Framework-specific evidence adapters and connector fixtures | Roadmap |
 | Hosted scheduling, history, alerts, and private control plane | Commercial direction |
 
-ContextFence is an early release. The v1 contract is versioned, but backward-compatibility guarantees will firm up before `1.0.0`.
+Everything below is ready in source. The versioned npm package, Action reference, GitHub Release, and release image land together with the first trusted `v0.1.0` tag. ContextFence is an early release: the v1 contract is versioned, but backward-compatibility guarantees will firm up before `1.0.0`.
 
 ## Quick start
 
 Requirements: Node.js 22.14 or newer.
 
 > [!NOTE]
-> The first public npm release is being bootstrapped. Until `contextfence@0.1.0` is published, run the release-ready source directly as shown below. The [release runbook](docs/releasing.md) records the one-time npm setup.
+> The first public npm release is being bootstrapped. Until `contextfence@0.1.0` is published, run the release-ready source directly as shown below. The [release runbook](https://github.com/devectorio/contextfence/blob/main/docs/releasing.md) records the one-time npm setup.
 
 Clone the repository, build the local CLI, then run the network-free passing suite:
 
@@ -77,7 +77,7 @@ Validate a contract without contacting its target:
 node dist/package/cli.js test boundary.yaml --dry-run
 ```
 
-See [`examples/`](examples/README.md) for a passing mock suite, a deliberately failing cache fixture, an authorized staging template, and synthetic seed documents.
+See [the examples guide](https://github.com/devectorio/contextfence/blob/main/examples/README.md) for a passing mock suite, a deliberately failing cache fixture, an authorized staging template, and synthetic seed documents.
 
 ## A real v1 boundary contract
 
@@ -202,7 +202,7 @@ steps:
 
 The Action installs the exact package version into an isolated temporary directory from the public npm registry, disables install scripts, rejects workspace path and symlink escapes, and invokes the absolute binary. For live targets, use a post-merge or scheduled job on `main`, a protected GitHub environment, fixed egress, and least-privilege test secrets.
 
-See [the complete GitHub Action guide](docs/github-action.md) for inputs, protected live checks, SARIF upload, JUnit, artifacts, and pinning guidance.
+See [the complete GitHub Action guide](https://github.com/devectorio/contextfence/blob/main/docs/github-action.md) for inputs, protected live checks, SARIF upload, JUnit, artifacts, and pinning guidance.
 
 ## Interactive lab
 
@@ -236,7 +236,7 @@ docker build -t contextfence:local .
 docker run --rm --read-only --tmpfs /tmp -p 8080:8080 contextfence:local
 ```
 
-Release images target `linux/amd64` and `linux/arm64` and include SBOM and provenance metadata. See [deployment guidance](docs/deployment.md) for hardened runtime flags, base paths, Pages, and custom domains.
+Release images target `linux/amd64` and `linux/arm64` and include SBOM and provenance metadata. See [deployment guidance](https://github.com/devectorio/contextfence/blob/main/docs/deployment.md) for hardened runtime flags, base paths, Pages, and custom domains.
 
 ## Architecture
 
@@ -252,7 +252,7 @@ flowchart LR
     Assertions --> Reports[Pretty / JSON / JUnit / SARIF / HTML]
 ```
 
-The architecture separates contract, adapter, normalized evidence, assertion, and reporting concerns. Provider-specific behavior stays behind an adapter; policy evaluation remains deterministic and framework-neutral. Read [the architecture and trust-boundary document](docs/architecture.md) for the execution sequence, data lifecycle, extension rules, and limitations.
+The architecture separates contract, adapter, normalized evidence, assertion, and reporting concerns. Provider-specific behavior stays behind an adapter; policy evaluation remains deterministic and framework-neutral. Read [the architecture and trust-boundary document](https://github.com/devectorio/contextfence/blob/main/docs/architecture.md) for the execution sequence, data lifecycle, extension rules, and limitations.
 
 ## Threat cases
 
@@ -276,7 +276,7 @@ ContextFence is a regression-testing client, not an authorization engine, runtim
 
 A passing suite proves only that the declared assertions passed against the evidence the target exposed during that run. It cannot prove that every identity, source, cache state, connector, query, or attack path is safe, nor that a target exposed complete retrieval metadata.
 
-Use ContextFence alongside least privilege, secure indexing, cache-key review, access audits, threat modelling, conventional tests, and authorized security assessment. Read [SECURITY.md](SECURITY.md) before testing a live system and report vulnerabilities privately.
+Use ContextFence alongside least privilege, secure indexing, cache-key review, access audits, threat modelling, conventional tests, and authorized security assessment. Read the [security policy](https://github.com/devectorio/contextfence/blob/main/SECURITY.md) before testing a live system and report vulnerabilities privately.
 
 ## Open source and commercial path
 
@@ -326,7 +326,7 @@ node scripts/release-check.mjs --allow-dirty
 
 The release preflight checks lint, types, tests, web and package builds, every example contract, CLI/package/Action/changelog version alignment, generated third-party notices, and the exact npm tarball contents.
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md), [SUPPORT.md](SUPPORT.md), the [release runbook](docs/releasing.md), [CHANGELOG.md](CHANGELOG.md), and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+Read the [contribution guide](https://github.com/devectorio/contextfence/blob/main/CONTRIBUTING.md), [support guide](https://github.com/devectorio/contextfence/blob/main/SUPPORT.md), [governance model](https://github.com/devectorio/contextfence/blob/main/GOVERNANCE.md), [release runbook](https://github.com/devectorio/contextfence/blob/main/docs/releasing.md), [changelog](https://github.com/devectorio/contextfence/blob/main/CHANGELOG.md), and [code of conduct](https://github.com/devectorio/contextfence/blob/main/CODE_OF_CONDUCT.md).
 
 ## License
 

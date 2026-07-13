@@ -43,12 +43,18 @@
   "files": [
     "dist/package",
     "examples/contracts",
+    "docs",
     "CHANGELOG.md",
+    "CODE_OF_CONDUCT.md",
+    "CONTRIBUTING.md",
+    "GOVERNANCE.md",
     "LICENSE",
     "NOTICE",
+    "SUPPORT.md",
     "THIRD_PARTY_NOTICES.txt",
     "README.md",
-    "SECURITY.md"
+    "SECURITY.md",
+    "public/og.svg"
   ],
   "sideEffects": false,
   "engines": {

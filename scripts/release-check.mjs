@@ -145,11 +145,31 @@ const packedFiles = new Set(pack.files.map(({ path }) => path))
 for (const required of [
   'LICENSE',
   'README.md',
+  'CONTRIBUTING.md',
+  'CODE_OF_CONDUCT.md',
+  'GOVERNANCE.md',
+  'SUPPORT.md',
+  'SECURITY.md',
   'THIRD_PARTY_NOTICES.txt',
+  'docs/architecture.md',
+  'docs/deployment.md',
+  'docs/github-action.md',
+  'docs/releasing.md',
+  'public/og.svg',
   'package.json',
   packageJson.bin.contextfence.replace(/^\.\//, ''),
 ]) {
   if (!packedFiles.has(required)) fail(`npm tarball is missing ${required}`)
+}
+
+const readme = readFileSync(resolve(root, 'README.md'), 'utf8')
+for (const link of [
+  'https://devectorio.github.io/contextfence/og.svg',
+  'https://github.com/devectorio/contextfence/blob/main/docs/github-action.md',
+  'https://github.com/devectorio/contextfence/blob/main/docs/architecture.md',
+  'https://github.com/devectorio/contextfence/blob/main/docs/releasing.md',
+]) {
+  if (!readme.includes(link)) fail(`README must use a portable public link: ${link}`)
 }
 
 const forbidden = [...packedFiles].filter(
