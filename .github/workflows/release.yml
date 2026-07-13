@@ -67,7 +67,7 @@ jobs:
             exit 1
           fi
           smoke_directory="$(mktemp -d)"
-          npm install --ignore-scripts --prefix "$smoke_directory" "${tarballs[0]}"
+          npm install --ignore-scripts --prefix "$smoke_directory" "./${tarballs[0]}"
           "$smoke_directory/node_modules/.bin/contextfence" --version
           "$smoke_directory/node_modules/.bin/contextfence" test examples/contracts/mock.boundary.yaml
 
