@@ -1,8 +1,16 @@
-FROM node:22.14.0-alpine@sha256:9bef0ef1e268f60627da9ba7d7605e8831d5b56ad07487d24d1aa386336d1944 AS build
+# BuildKit supplies its actual platform automatically. The default preserves a
+# usable single-platform `docker build` path for legacy local builders.
+ARG BUILDPLATFORM=linux/amd64
+
+# The compiled Vite site is architecture-independent. Keep this stage native to
+# the Buildx host so multi-architecture publishing does not run pnpm under QEMU.
+FROM --platform=$BUILDPLATFORM node:22.14.0-alpine@sha256:9bef0ef1e268f60627da9ba7d7605e8831d5b56ad07487d24d1aa386336d1944 AS build
 
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@11.0.8 --activate
+# Corepack is not bundled in newer Node base images. Install the pinned package
+# manager explicitly so Dependabot can safely advance this image.
+RUN npm install --global pnpm@11.0.8 --ignore-scripts
 
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile

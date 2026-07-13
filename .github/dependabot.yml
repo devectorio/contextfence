@@ -15,6 +15,13 @@ updates:
         dependency-type: production
       development-dependencies:
         dependency-type: development
+    # TypeScript 7 is not yet compatible with this repository's ESLint toolchain.
+    # Keep major compiler upgrades explicit and reviewed, while continuing to take
+    # weekly minor and patch updates automatically.
+    ignore:
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: github-actions
     directory: /

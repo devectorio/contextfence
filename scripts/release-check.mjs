@@ -82,8 +82,12 @@ if (process.env.GITHUB_REF_TYPE === 'tag' && process.env.GITHUB_REF_NAME !== exp
 }
 
 const changelog = readFileSync(resolve(root, 'CHANGELOG.md'), 'utf8')
-const escapedVersion = version.replaceAll('.', '\\.')
-if (!new RegExp(`^## \\[${escapedVersion}\\] - \\d{4}-\\d{2}-\\d{2}$`, 'm').test(changelog)) {
+const releaseHeading = `## [${version}] - `
+const hasDatedReleaseHeading = changelog.split(/\r?\n/).some((line) => {
+  if (!line.startsWith(releaseHeading)) return false
+  return /^\d{4}-\d{2}-\d{2}$/.test(line.slice(releaseHeading.length))
+})
+if (!hasDatedReleaseHeading) {
   fail(`CHANGELOG.md has no dated ${version} release heading`)
 }
 

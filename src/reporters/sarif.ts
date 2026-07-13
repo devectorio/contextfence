@@ -18,7 +18,8 @@ function ruleIdBase(value: string): string {
   const normalized = value
     .trim()
     .replace(/[^a-zA-Z0-9._-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
   if (!normalized) return "contextfence-result";
   return /^[a-zA-Z0-9]/.test(normalized)
     ? normalized

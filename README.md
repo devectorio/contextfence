@@ -47,34 +47,34 @@ ContextFence is an early release. The v1 contract is versioned, but backward-com
 
 ## Quick start
 
-Requirements: Node.js 22.12 or newer.
+Requirements: Node.js 22.14 or newer.
 
-Clone the repository to get the example contracts, then run the network-free passing suite without installing globally:
+> [!NOTE]
+> The first public npm release is being bootstrapped. Until `contextfence@0.1.0` is published, run the release-ready source directly as shown below. The [release runbook](docs/releasing.md) records the one-time npm setup.
+
+Clone the repository, build the local CLI, then run the network-free passing suite:
 
 ```bash
 git clone https://github.com/devectorio/contextfence.git
 cd contextfence
-npx --yes contextfence@0.1.0 test examples/contracts/mock.boundary.yaml
-```
-
-Or add the runner to a project:
-
-```bash
-npm install --save-dev contextfence@0.1.0
-npx contextfence test boundary.yaml
+corepack enable
+corepack prepare pnpm@11.0.8 --activate
+pnpm install --frozen-lockfile
+pnpm build:package
+node dist/package/cli.js test examples/contracts/mock.boundary.yaml
 ```
 
 Inside the clone, the intentionally vulnerable cache-replay example shows a real failing report:
 
 ```bash
-npx contextfence test examples/contracts/vulnerable-cache.boundary.yaml
+node dist/package/cli.js test examples/contracts/vulnerable-cache.boundary.yaml
 # exits 1 after reporting critical boundary violations
 ```
 
 Validate a contract without contacting its target:
 
 ```bash
-npx contextfence test boundary.yaml --dry-run
+node dist/package/cli.js test boundary.yaml --dry-run
 ```
 
 See [`examples/`](examples/README.md) for a passing mock suite, a deliberately failing cache fixture, an authorized staging template, and synthetic seed documents.
@@ -181,6 +181,9 @@ Reports can contain prompts, response fragments, source identifiers, error detai
 
 ## GitHub Actions
 
+> [!NOTE]
+> The composite Action below is ready for the first tagged npm release, but `devectorio/contextfence@v0.1.0` is not published yet. Until then, run the checked-out source CLI in your own workflow. Do not copy a versioned Action or npm command before the release runbook is complete.
+
 For pull requests, run only a deterministic mock suite with no live credentials:
 
 ```yaml
@@ -205,11 +208,11 @@ See [the complete GitHub Action guide](docs/github-action.md) for inputs, protec
 
 The [hosted demo](https://devectorio.github.io/contextfence/) models a synthetic media company with Newsroom, Finance, Legal, Executive, and shared sources. It can:
 
+- Explain one canonical cache-isolation failure before any controls are shown.
 - Toggle filter-after-retrieval, identity-blind cache, stale ACL, and mixed-security chunk faults.
-- Inspect an identity-by-source access matrix.
 - Run deterministic permission probes and canary checks.
-- Follow a violation through source, chunk, retrieval, cache, answer, and citation evidence.
-- Compare vulnerable and remediated behavior and export synthetic JSON.
+- Follow a violation through identity, policy, retrieval, cache, context, and assertion evidence.
+- Apply every remediation and rerun the exact same synthetic contract.
 
 The browser lab is deliberately synthetic and has no target credentials. It is a visual explanation of the problem; the CLI is the production regression runner.
 
@@ -226,12 +229,11 @@ Open [http://localhost:5173](http://localhost:5173).
 
 ## Container
 
-The demo also ships as a non-root static container on port `8080`:
+The demo builds as a non-root static container on port `8080`. A versioned GHCR image will be available after the first tagged release; until then, build the exact source locally:
 
 ```bash
-docker pull ghcr.io/devectorio/contextfence:0.1.0
-docker run --rm --read-only --tmpfs /tmp -p 8080:8080 \
-  ghcr.io/devectorio/contextfence:0.1.0
+docker build -t contextfence:local .
+docker run --rm --read-only --tmpfs /tmp -p 8080:8080 contextfence:local
 ```
 
 Release images target `linux/amd64` and `linux/arm64` and include SBOM and provenance metadata. See [deployment guidance](docs/deployment.md) for hardened runtime flags, base paths, Pages, and custom domains.
