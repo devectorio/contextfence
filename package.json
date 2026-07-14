@@ -43,6 +43,7 @@
   "files": [
     "dist/package",
     "examples/contracts",
+    "examples/manifests",
     "docs",
     "CHANGELOG.md",
     "CODE_OF_CONDUCT.md",

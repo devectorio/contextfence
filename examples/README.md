@@ -43,6 +43,16 @@ contextfence test examples/contracts/matrix.boundary.yaml --dry-run
 
 Every identity outside a source's `allow` list becomes a critical deny probe (`source_absent` + `not_contains` the canary); every authorized identity becomes a medium positive control. Adding one identity or one source re-derives the entire grid.
 
+## Generate a matrix from an access manifest
+
+When the authorization model already exists elsewhere, describe it as a connector-neutral manifest and let ContextFence write the contract:
+
+```bash
+contextfence generate examples/manifests/northstar-access.yaml --output boundary.yaml
+```
+
+`manifests/northstar-access.yaml` lists identities and, per source, the identities allowed to retrieve it. Probe keys and canaries are derived deterministically when omitted, and target and identity credentials are emitted as environment placeholders. Review the generated contract, seed each canary into a disposable test index, then run it with `contextfence test`.
+
 ## Point at a real, authorized test target
 
 Copy `contracts/openai-compatible.boundary.yaml`, then supply credentials through the environment:

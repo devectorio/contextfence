@@ -17,10 +17,21 @@ export interface TestCommandArguments {
   dryRun: boolean;
 }
 
+export const GENERATE_ADAPTERS = ["openai-compatible", "mock"] as const;
+export type GenerateAdapter = (typeof GENERATE_ADAPTERS)[number];
+
+export interface GenerateCommandArguments {
+  kind: "generate";
+  file: string;
+  output?: string;
+  adapter: GenerateAdapter;
+}
+
 export type CliArguments =
-  | { kind: "help"; topic: "root" | "test" }
+  | { kind: "help"; topic: "root" | "test" | "generate" }
   | { kind: "version" }
-  | TestCommandArguments;
+  | TestCommandArguments
+  | GenerateCommandArguments;
 
 export class CliUsageError extends Error {
   constructor(message: string) {
@@ -68,6 +79,9 @@ export function parseCliArguments(argv: readonly string[]): CliArguments {
   }
   if (argv.length === 1 && ["-v", "--version"].includes(argv[0])) {
     return { kind: "version" };
+  }
+  if (argv[0] === "generate") {
+    return parseGenerateArguments(argv);
   }
   if (argv[0] !== "test") {
     throw new CliUsageError(`Unknown command ${argv[0]}.`);
@@ -133,17 +147,74 @@ export function parseCliArguments(argv: readonly string[]): CliArguments {
   };
 }
 
+const GENERATE_VALUE_OPTIONS = new Set(["--output", "--adapter"]);
+
+/** Parse `contextfence generate <access-manifest> [--output <path>] [--adapter <adapter>]`. */
+function parseGenerateArguments(argv: readonly string[]): CliArguments {
+  if (argv.length === 2 && ["-h", "--help"].includes(argv[1])) {
+    return { kind: "help", topic: "generate" };
+  }
+  const options = new Map<string, string>();
+  const positional: string[] = [];
+  for (let index = 1; index < argv.length; index += 1) {
+    const argument = argv[index];
+    if (argument === "-h" || argument === "--help") {
+      throw new CliUsageError("--help cannot be combined with generate arguments.");
+    }
+    if (argument.startsWith("--")) {
+      const equalsIndex = argument.indexOf("=");
+      const option = equalsIndex >= 0 ? argument.slice(0, equalsIndex) : argument;
+      if (!GENERATE_VALUE_OPTIONS.has(option)) throw new CliUsageError(`Unknown option ${option}.`);
+      if (options.has(option)) throw new CliUsageError(`${option} was supplied more than once.`);
+      const value = equalsIndex >= 0 ? argument.slice(equalsIndex + 1) : argv[++index];
+      if (value === undefined || value.length === 0 || (equalsIndex < 0 && value.startsWith("--"))) {
+        throw new CliUsageError(`${option} requires a value.`);
+      }
+      options.set(option, value);
+      continue;
+    }
+    if (argument.startsWith("-")) throw new CliUsageError(`Unknown option ${argument}.`);
+    positional.push(argument);
+  }
+  if (positional.length !== 1) {
+    throw new CliUsageError("generate requires exactly one access manifest file.");
+  }
+  const adapterValue = options.get("--adapter") ?? "openai-compatible";
+  if (!(GENERATE_ADAPTERS as readonly string[]).includes(adapterValue)) {
+    throw new CliUsageError(`--adapter must be one of ${GENERATE_ADAPTERS.join(", ")}.`);
+  }
+  return {
+    kind: "generate",
+    file: positional[0],
+    ...(options.has("--output") ? { output: options.get("--output") } : {}),
+    adapter: adapterValue as GenerateAdapter,
+  };
+}
+
 export const ROOT_HELP = `ContextFence ${CONTEXTFENCE_VERSION} — permission regression tests for RAG systems
 
 Usage:
   contextfence test <boundary.yaml> [options]
+  contextfence generate <access-manifest.yaml> [options]
   contextfence --help
   contextfence --version
 
 Commands:
-  test    Validate and execute a versioned boundary contract
+  test        Validate and execute a versioned boundary contract
+  generate    Expand an access manifest into a matrix boundary contract
 
-Run "contextfence test --help" for test options.
+Run "contextfence test --help" or "contextfence generate --help" for options.
+`;
+
+export const GENERATE_HELP = `Usage: contextfence generate <access-manifest.yaml> [options]
+
+Expand a connector-neutral access manifest (identities, sources, and per-source
+allow lists) into a ready-to-edit matrix boundary contract.
+
+Options:
+  --adapter <adapter>     openai-compatible or mock (default: openai-compatible)
+  --output <path>         Write the contract to a file; use - or omit for stdout
+  -h, --help              Show this help
 `;
 
 export const TEST_HELP = `Usage: contextfence test <boundary.yaml> [options]

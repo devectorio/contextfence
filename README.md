@@ -229,6 +229,23 @@ Exit status is stable and designed for automation:
 
 Reports can contain prompts, response fragments, source identifiers, error details, and canaries. Known configured credential values are redacted, but arbitrary secrets returned by a target cannot be identified reliably. Treat artifacts as sensitive.
 
+### Generate a contract from an access manifest
+
+When the authorization model already lives in an IdP, a permissions export, or a spreadsheet, you do not have to hand-write the matrix. `contextfence generate` turns a connector-neutral access manifest into a ready-to-edit matrix contract:
+
+```text
+contextfence generate <access-manifest.yaml> [options]
+
+--adapter <adapter>     openai-compatible or mock (default: openai-compatible)
+--output <path>         Write the contract to a file; use - or omit for stdout
+```
+
+```bash
+contextfence generate examples/manifests/northstar-access.yaml --output boundary.yaml
+```
+
+A manifest lists identities and, for each source, an `allow` list of the identities permitted to see it. Probe keys and canaries are derived deterministically when omitted, and the generated contract emits environment placeholders for target and identity credentials so no secret is written to disk. The output is an ordinary boundary contract—review it, seed each canary into a disposable test index, then run it with `contextfence test`. Live connector imports remain a commercial concern, but the manifest they would produce is a stable, portable seam.
+
 ## GitHub Actions
 
 > [!NOTE]

@@ -139,6 +139,9 @@ if (!process.argv.includes('--skip-checks')) {
       },
     },
   )
+  run('node', ['dist/package/cli.js', 'generate', 'examples/manifests/northstar-access.yaml'], {
+    capture: true,
+  })
   run(
     'node',
     ['dist/package/cli.js', 'test', 'examples/contracts/openai-compatible.boundary.yaml', '--dry-run'],

@@ -8,6 +8,7 @@ import { createTargetAdapter } from "../adapters";
 import {
   BoundaryContractError,
   TargetConfigurationError,
+  generateBoundaryContract,
   parseBoundaryContract,
 } from "../contract";
 import type { BoundarySeverity } from "../contract/types";
@@ -15,6 +16,7 @@ import type { ReportSeverity, RunReport } from "../reporters/types";
 import {
   CONTEXTFENCE_VERSION,
   CliUsageError,
+  GENERATE_HELP,
   ROOT_HELP,
   TEST_HELP,
   parseCliArguments,
@@ -114,11 +116,35 @@ export async function runCli(
   try {
     const args = parseCliArguments(argv);
     if (args.kind === "help") {
-      io.stdout(args.topic === "root" ? ROOT_HELP : TEST_HELP);
+      const help = args.topic === "root" ? ROOT_HELP : args.topic === "generate" ? GENERATE_HELP : TEST_HELP;
+      io.stdout(help);
       return CLI_EXIT_CODE.success;
     }
     if (args.kind === "version") {
       io.stdout(`${CONTEXTFENCE_VERSION}\n`);
+      return CLI_EXIT_CODE.success;
+    }
+
+    if (args.kind === "generate") {
+      let manifestSource: string;
+      try {
+        manifestSource = await io.readText(args.file);
+      } catch {
+        io.stderr(`ContextFence could not read ${args.file}.\n`);
+        return CLI_EXIT_CODE.configuration;
+      }
+      const contract = generateBoundaryContract(manifestSource, { adapter: args.adapter }, args.file);
+      if (args.output && args.output !== "-") {
+        try {
+          await io.writeText(args.output, contract);
+        } catch {
+          io.stderr(`ContextFence could not write ${args.output}.\n`);
+          return CLI_EXIT_CODE.runtime;
+        }
+        io.stdout(`ContextFence contract written to ${args.output}.\n`);
+      } else {
+        io.stdout(contract);
+      }
       return CLI_EXIT_CODE.success;
     }
 
