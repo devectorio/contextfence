@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Declarative `matrix` block that expands an authorization model (identities, sources, per-source `allow` lists, and canaries) into the full identity × source grid of deterministic probes: a critical deny probe for every unauthorized identity and a positive control for every authorized one. Generated probes compile down to ordinary v1 probes and report against their source line. Includes `examples/contracts/matrix.boundary.yaml` and `examples/contracts/matrix-leak.boundary.yaml`.
+- `contextfence generate` command that turns a connector-neutral access manifest (identities, sources, and per-source `allow` lists) into a matrix boundary contract, deriving probe keys and canaries deterministically and emitting environment placeholders for target and identity credentials. Includes `examples/manifests/northstar-access.yaml`.
+
 ## [0.1.0] - 2026-07-11
 
 ### Added

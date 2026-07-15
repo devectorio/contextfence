@@ -7,6 +7,8 @@ export {
 } from "./errors";
 export { parseBoundaryContract } from "./parser";
 export type { ParseBoundaryContractOptions } from "./parser";
+export { generateBoundaryContract } from "./generate";
+export type { GenerateOptions, GeneratedTargetAdapter } from "./generate";
 export {
   validateBoundaryContract,
   validateBoundaryContractValue,

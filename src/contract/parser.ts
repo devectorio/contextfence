@@ -167,7 +167,7 @@ export function parseBoundaryContract(
   const probeLocations = Object.fromEntries(
     validation.contract.probes.map((probe, index) => [
       probe.id,
-      positionForPath(document, lineCounter, ["probes", index]),
+      positionForPath(document, lineCounter, validation.probePaths[index] ?? ["probes", index]),
     ]),
   );
   return {

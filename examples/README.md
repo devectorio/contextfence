@@ -22,6 +22,37 @@ Use `--dry-run` to validate and plan either contract without executing probes:
 contextfence test examples/contracts/mock.boundary.yaml --dry-run
 ```
 
+## Expand an authorization matrix
+
+Instead of hand-writing one probe per `(identity, forbidden source)` pair, declare the intended authorization model once and let ContextFence expand the full identity × source grid. The leak fixture returns one identity-blind response to every role, so the matrix flags every cell that should have been denied and exits `1`:
+
+```bash
+contextfence test examples/contracts/matrix-leak.boundary.yaml
+```
+
+`contracts/matrix.boundary.yaml` is the same construct pointed at an authorized OpenAI-compatible target. Plan the generated grid without a network call:
+
+```bash
+CONTEXTFENCE_TARGET_URL="https://rag-staging.example.test" \
+CONTEXTFENCE_TARGET_API_KEY="synthetic" \
+CONTEXTFENCE_NEWSROOM_TOKEN="synthetic" \
+CONTEXTFENCE_FINANCE_TOKEN="synthetic" \
+CONTEXTFENCE_LEGAL_TOKEN="synthetic" \
+contextfence test examples/contracts/matrix.boundary.yaml --dry-run
+```
+
+Every identity outside a source's `allow` list becomes a critical deny probe (`source_absent` + `not_contains` the canary); every authorized identity becomes a medium positive control. Adding one identity or one source re-derives the entire grid.
+
+## Generate a matrix from an access manifest
+
+When the authorization model already exists elsewhere, describe it as a connector-neutral manifest and let ContextFence write the contract:
+
+```bash
+contextfence generate examples/manifests/northstar-access.yaml --output boundary.yaml
+```
+
+`manifests/northstar-access.yaml` lists identities and, per source, the identities allowed to retrieve it. Probe keys and canaries are derived deterministically when omitted, and target and identity credentials are emitted as environment placeholders. Review the generated contract, seed each canary into a disposable test index, then run it with `contextfence test`.
+
 ## Point at a real, authorized test target
 
 Copy `contracts/openai-compatible.boundary.yaml`, then supply credentials through the environment:

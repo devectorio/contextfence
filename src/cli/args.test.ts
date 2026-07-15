@@ -49,5 +49,26 @@ describe("CLI argument parser", () => {
       parseCliArguments(["test", "a.yaml", "--target", "--dry-run"]),
     ).toThrowError(/requires a value/);
   });
+
+  it("parses the generate command, its adapter, and help", () => {
+    expect(parseCliArguments(["generate", "--help"])).toEqual({ kind: "help", topic: "generate" });
+    expect(parseCliArguments(["generate", "access.yaml"])).toEqual({
+      kind: "generate",
+      file: "access.yaml",
+      adapter: "openai-compatible",
+    });
+    expect(
+      parseCliArguments(["generate", "access.yaml", "--adapter=mock", "--output", "boundary.yaml"]),
+    ).toEqual({
+      kind: "generate",
+      file: "access.yaml",
+      output: "boundary.yaml",
+      adapter: "mock",
+    });
+    expect(() =>
+      parseCliArguments(["generate", "access.yaml", "--adapter", "invalid"]),
+    ).toThrowError(/--adapter must be one of/);
+    expect(() => parseCliArguments(["generate"])).toThrowError(/exactly one access manifest/);
+  });
 });
 
