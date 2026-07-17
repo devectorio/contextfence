@@ -25,7 +25,7 @@ A final answer can look correctly redacted after the system has already crossed 
 
 These failures span identity, ingestion, retrieval, ranking, caching, citations, and generation. Unit-testing any single layer is not enough. ContextFence makes the end-to-end boundary reviewable, repeatable, and portable across CI, scheduled staging checks, and incident reproduction.
 
-## What is in the v0.1.0 release candidate
+## What is in v0.1.0
 
 | Capability | Status |
 | --- | --- |
@@ -38,39 +38,37 @@ These failures span identity, ingestion, retrieval, ranking, caching, citations,
 | OpenAI-compatible black-box target adapter | Shipped |
 | Pretty, JSON, JUnit, SARIF, and portable HTML reports | Shipped |
 | Severity thresholds, bounded concurrency, aggregate probe timeouts, and explicit exit codes | Shipped |
-| Reusable GitHub Action source (exact-version Action after the first tag) | Ready in source |
+| Reusable exact-version GitHub Action (`devectorio/contextfence@v0.1.0`) | Shipped |
 | Interactive vulnerable/remediated browser lab | Shipped |
 | Non-root production container and GitHub Pages deployment | Shipped |
 | Framework-specific evidence adapters and connector fixtures | Roadmap |
 | Hosted scheduling, history, alerts, and private control plane | Commercial direction |
 
-Everything below is ready in source. The versioned npm package, Action reference, GitHub Release, and release image land together with the first trusted `v0.1.0` tag. ContextFence is an early release: the v1 contract is versioned, but backward-compatibility guarantees will firm up before `1.0.0`.
+The `contextfence` package is published on npm, the `devectorio/contextfence@v0.1.0` Action resolves against the `v0.1.0` tag, and the demo container is on GHCR. ContextFence is an early release: the v1 contract is versioned, but backward-compatibility guarantees will firm up before `1.0.0`. The [release runbook](https://github.com/devectorio/contextfence/blob/main/docs/releasing.md) records how releases are built and attested.
 
 ## Quick start
 
 Requirements: Node.js 22.14 or newer.
 
-> [!NOTE]
-> The first public npm release is being bootstrapped. Until `contextfence@0.1.0` is published, run the release-ready source directly as shown below. The [release runbook](https://github.com/devectorio/contextfence/blob/main/docs/releasing.md) records the one-time npm setup.
-
-Clone the repository, build the local CLI, then run the network-free passing suite:
+Install the CLI, fetch the network-free example suite, and run it:
 
 ```bash
-git clone https://github.com/devectorio/contextfence.git
-cd contextfence
-corepack enable
-corepack prepare pnpm@11.0.8 --activate
-pnpm install --frozen-lockfile
-pnpm build:package
-node dist/package/cli.js test examples/contracts/mock.boundary.yaml
+npm install -g contextfence
+contextfence --version
+
+curl -fsSLO https://raw.githubusercontent.com/devectorio/contextfence/v0.1.0/examples/contracts/mock.boundary.yaml
+contextfence test mock.boundary.yaml
 ```
 
-Inside the clone, the intentionally vulnerable cache-replay example shows a real failing report:
+The intentionally vulnerable cache-replay example shows a real failing report:
 
 ```bash
-node dist/package/cli.js test examples/contracts/vulnerable-cache.boundary.yaml
+curl -fsSLO https://raw.githubusercontent.com/devectorio/contextfence/v0.1.0/examples/contracts/vulnerable-cache.boundary.yaml
+contextfence test vulnerable-cache.boundary.yaml
 # exits 1 after reporting critical boundary violations
 ```
+
+To work from source instead, see [Development](#development).
 
 Validate a contract without contacting its target:
 
@@ -248,9 +246,6 @@ A manifest lists identities and, for each source, an `allow` list of the identit
 
 ## GitHub Actions
 
-> [!NOTE]
-> The composite Action below is ready for the first tagged npm release, but `devectorio/contextfence@v0.1.0` is not published yet. Until then, run the checked-out source CLI in your own workflow. Do not copy a versioned Action or npm command before the release runbook is complete.
-
 For pull requests, run only a deterministic mock suite with no live credentials:
 
 ```yaml
@@ -296,7 +291,13 @@ Open [http://localhost:5173](http://localhost:5173).
 
 ## Container
 
-The demo builds as a non-root static container on port `8080`. A versioned GHCR image will be available after the first tagged release; until then, build the exact source locally:
+The demo builds as a non-root static container on port `8080` and versioned images are published to GHCR:
+
+```bash
+docker run --rm --read-only --tmpfs /tmp -p 8080:8080 ghcr.io/devectorio/contextfence:0.1.0
+```
+
+To build the exact source locally instead:
 
 ```bash
 docker build -t contextfence:local .

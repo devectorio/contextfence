@@ -2,7 +2,7 @@
 
 The repository ships a composite Action that installs one exact ContextFence npm version and runs a boundary contract. Keep the Action ref and its `version` input pinned during reviewable releases.
 
-> **Release status:** the Action is wired for the first `v0.1.0` release, but that tag and the `contextfence@0.1.0` npm package do not exist yet. Follow [the release runbook](releasing.md) before using the versioned examples below. Until then, checkout the repository and run `node dist/package/cli.js` after building it.
+> **Release status:** the `v0.1.0` tag and the `contextfence@0.1.0` npm package are published, so the versioned examples below work as written. Pin the Action to a tag or commit SHA you have reviewed.
 
 ## Pull request workflow with no secrets
 
