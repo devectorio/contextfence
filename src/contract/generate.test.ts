@@ -55,7 +55,7 @@ describe("access manifest generator", () => {
     expect(loaded.contract.probes[0].category).toBe("matrix-deny");
   });
 
-  it("rejects an allow entry that references an undefined identity", () => {
+  it("rejects an undefined allow identity with a line-aware diagnostic", () => {
     const manifest = MANIFEST.replace("- finance-analyst", "- ghost");
     try {
       generateBoundaryContract(manifest, {}, "manifest.yaml");
@@ -65,6 +65,30 @@ describe("access manifest generator", () => {
       const formatted = (error as BoundaryContractError).format();
       expect(formatted).toContain("$.sources[0].allow[0]");
       expect(formatted).toContain("UNKNOWN_IDENTITY");
+      // The diagnostic must point at the offending allow entry, not 1:1.
+      const line = Number(formatted.match(/manifest\.yaml:(\d+):\d+/)?.[1]);
+      expect(line).toBeGreaterThan(10);
+    }
+  });
+
+  it("rejects identity ids that derive the same credential placeholder", () => {
+    const manifest = `
+identities:
+  - id: finance-analyst
+  - id: finance.analyst
+sources:
+  - id: finance/plan.md
+    allow:
+      - finance-analyst
+`;
+    try {
+      generateBoundaryContract(manifest, {}, "manifest.yaml");
+      throw new Error("Expected generation to fail");
+    } catch (error) {
+      expect(error).toBeInstanceOf(BoundaryContractError);
+      const formatted = (error as BoundaryContractError).format();
+      expect(formatted).toContain("DUPLICATE_TOKEN_ENV");
+      expect(formatted).toContain("CONTEXTFENCE_FINANCE_ANALYST_TOKEN");
     }
   });
 
