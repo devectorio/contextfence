@@ -66,9 +66,18 @@ The v1 loader owns:
 - `${NAME}` and `${NAME:-fallback}` environment interpolation.
 - Schema normalization and rejection of unknown fields.
 - Identity, probe, assertion, severity, URL, and header validation.
+- Expansion of the optional `matrix` block into ordinary v1 probes.
 - A longest-first redactor for interpolated and configured credential values.
 
 Contracts are reviewable security artifacts. Keep real credentials out of them even though the loader redacts known values from its own diagnostics.
+
+### Matrix expansion
+
+A contract may declare a `matrix` block instead of (or alongside) explicit probes: identities, and for each source an identifier, a synthetic canary, and an `allow` list. Validation expands the identity × source cross-product deterministically — every unauthorized identity becomes a critical deny probe (`source_absent` + `not_contains` the canary) and every authorized identity becomes a medium positive control. Expansion happens entirely inside the loader, before the runner sees the contract, so adapters, assertions, reporters, severities, and exit codes are unchanged, and a violated cell reports the YAML position of its matrix source entry.
+
+### Access-manifest generator
+
+`contextfence generate` is a build-time codegen step, not a runtime component. It reads a connector-neutral access manifest (identities, sources, per-source `allow` lists — the shape an IdP or permissions export produces), derives probe keys and canaries deterministically when omitted, fails closed on unknown fields, duplicate keys, undefined identities, and identity ids whose derived credential placeholders collide, and emits a matrix contract with environment placeholders instead of secrets. The generated file is an ordinary contract: it earns no trust from having been generated and passes through the full loader on every run.
 
 ### Probe runner
 

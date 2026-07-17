@@ -63,6 +63,14 @@ function deriveCanary(key: string): string {
 }
 
 /** Parse and validate an access manifest, returning normalized identities and sources. */
+function pathText(path: readonly (string | number)[]): string {
+  return path.reduce<string>(
+    (result, part) =>
+      typeof part === "number" ? `${result}[${part}]` : `${result}.${part}`,
+    "$",
+  );
+}
+
 function readManifest(source: string, sourceName: string): {
   name: string;
   prompt: string;
@@ -78,10 +86,31 @@ function readManifest(source: string, sourceName: string): {
     schema: "core",
   });
   const diagnostics: ContractDiagnostic[] = [];
-  const fail = (message: string, code: string, path: string, node?: unknown): void => {
-    const offset = (node as { range?: readonly number[] } | undefined)?.range?.[0];
-    const position = typeof offset === "number" ? lineCounter.linePos(offset) : { line: 1, col: 1 };
-    diagnostics.push({ path, message, code, line: position.line, column: position.col });
+  const fail = (message: string, code: string, pathParts: readonly (string | number)[]): void => {
+    const path = [...pathParts];
+    let position = { line: 1, col: 1 };
+    while (path.length >= 0) {
+      let node: unknown;
+      try {
+        node = path.length === 0 ? document.contents : document.getIn(path, true);
+      } catch {
+        node = undefined;
+      }
+      const offset = (node as { range?: readonly number[] } | undefined)?.range?.[0];
+      if (typeof offset === "number") {
+        position = lineCounter.linePos(offset);
+        break;
+      }
+      if (path.length === 0) break;
+      path.pop();
+    }
+    diagnostics.push({
+      path: pathText(pathParts),
+      message,
+      code,
+      line: position.line,
+      column: position.col,
+    });
   };
 
   if (document.errors.length > 0) {
@@ -107,69 +136,81 @@ function readManifest(source: string, sourceName: string): {
 
   const known = new Set(["version", "name", "prompt", "identities", "sources"]);
   for (const key of Object.keys(root)) {
-    if (!known.has(key)) fail(`Unknown field ${key}.`, "UNKNOWN_FIELD", `$.${key}`);
+    if (!known.has(key)) fail(`Unknown field ${key}.`, "UNKNOWN_FIELD", [key]);
   }
 
   if (root.version !== undefined && root.version !== 1 && root.version !== "1") {
-    fail('Only access manifest version "1" is supported.', "UNSUPPORTED_VERSION", "$.version");
+    fail('Only access manifest version "1" is supported.', "UNSUPPORTED_VERSION", ["version"]);
   }
   const name = typeof root.name === "string" && root.name.trim() ? root.name : "generated-permission-matrix";
   const prompt = typeof root.prompt === "string" && root.prompt.trim() ? root.prompt : DEFAULT_PROMPT;
 
   const identities: ManifestIdentity[] = [];
   const identityIds = new Set<string>();
+  const tokenEnvOwners = new Map<string, string>();
   if (!Array.isArray(root.identities) || root.identities.length === 0) {
-    fail("identities must be a non-empty sequence.", "REQUIRED", "$.identities");
+    fail("identities must be a non-empty sequence.", "REQUIRED", ["identities"]);
   } else if (root.identities.length > MAX_IDENTITIES) {
-    fail(`At most ${MAX_IDENTITIES} identities are allowed.`, "RESOURCE_LIMIT", "$.identities");
+    fail(`At most ${MAX_IDENTITIES} identities are allowed.`, "RESOURCE_LIMIT", ["identities"]);
   } else {
     for (const [index, raw] of root.identities.entries()) {
-      const path = `$.identities[${index}]`;
+      const path = ["identities", index] as const;
       if (!isRecord(raw)) {
         fail("Each identity must be a mapping with an id.", "TYPE_MAPPING", path);
         continue;
       }
       const id = typeof raw.id === "string" ? raw.id : "";
       if (!IDENTIFIER.test(id)) {
-        fail("identity id must be a valid identifier (alphanumeric start; letters, numbers, dot, underscore, colon, hyphen).", "INVALID_IDENTIFIER", `${path}.id`);
+        fail("identity id must be a valid identifier (alphanumeric start; letters, numbers, dot, underscore, colon, hyphen).", "INVALID_IDENTIFIER", [...path, "id"]);
         continue;
       }
       if (identityIds.has(id)) {
-        fail(`identity id ${id} is duplicated.`, "DUPLICATE_ID", `${path}.id`);
+        fail(`identity id ${id} is duplicated.`, "DUPLICATE_ID", [...path, "id"]);
         continue;
       }
+      const tokenEnv = envToken(id);
+      const owner = tokenEnvOwners.get(tokenEnv);
+      if (owner !== undefined) {
+        fail(
+          `identity ids ${owner} and ${id} both derive the credential placeholder ${tokenEnv}; rename one so each identity gets its own token.`,
+          "DUPLICATE_TOKEN_ENV",
+          [...path, "id"],
+        );
+        continue;
+      }
+      tokenEnvOwners.set(tokenEnv, id);
       identityIds.add(id);
       const identityName = typeof raw.name === "string" && raw.name.trim() ? raw.name : id;
-      identities.push({ id, name: identityName, tokenEnv: envToken(id) });
+      identities.push({ id, name: identityName, tokenEnv });
     }
   }
 
   const sources: ManifestSource[] = [];
   const keys = new Set<string>();
   if (!Array.isArray(root.sources) || root.sources.length === 0) {
-    fail("sources must be a non-empty sequence.", "REQUIRED", "$.sources");
+    fail("sources must be a non-empty sequence.", "REQUIRED", ["sources"]);
   } else if (root.sources.length > MAX_SOURCES) {
-    fail(`At most ${MAX_SOURCES} sources are allowed.`, "RESOURCE_LIMIT", "$.sources");
+    fail(`At most ${MAX_SOURCES} sources are allowed.`, "RESOURCE_LIMIT", ["sources"]);
   } else {
     for (const [index, raw] of root.sources.entries()) {
-      const path = `$.sources[${index}]`;
+      const path = ["sources", index] as const;
       if (!isRecord(raw)) {
         fail("Each source must be a mapping with an id.", "TYPE_MAPPING", path);
         continue;
       }
       const id = typeof raw.id === "string" ? raw.id.trim() : "";
       if (!id) {
-        fail("source id must be a non-empty string.", "TYPE_STRING", `${path}.id`);
+        fail("source id must be a non-empty string.", "TYPE_STRING", [...path, "id"]);
         continue;
       }
       let key: string;
       if (raw.key !== undefined) {
         if (typeof raw.key !== "string" || !IDENTIFIER.test(raw.key)) {
-          fail("source key must be a valid identifier.", "INVALID_IDENTIFIER", `${path}.key`);
+          fail("source key must be a valid identifier.", "INVALID_IDENTIFIER", [...path, "key"]);
           continue;
         }
         if (keys.has(raw.key)) {
-          fail(`source key ${raw.key} is duplicated.`, "DUPLICATE_ID", `${path}.key`);
+          fail(`source key ${raw.key} is duplicated.`, "DUPLICATE_ID", [...path, "key"]);
           continue;
         }
         keys.add(raw.key);
@@ -182,11 +223,11 @@ function readManifest(source: string, sourceName: string): {
       const allow: string[] = [];
       if (raw.allow !== undefined) {
         if (!Array.isArray(raw.allow)) {
-          fail("allow must be a sequence of identity ids.", "TYPE_SEQUENCE", `${path}.allow`);
+          fail("allow must be a sequence of identity ids.", "TYPE_SEQUENCE", [...path, "allow"]);
         } else {
           for (const [allowIndex, allowed] of raw.allow.entries()) {
             if (typeof allowed !== "string" || !identityIds.has(allowed)) {
-              fail("allow references an identity that is not defined.", "UNKNOWN_IDENTITY", `${path}.allow[${allowIndex}]`);
+              fail("allow references an identity that is not defined.", "UNKNOWN_IDENTITY", [...path, "allow", allowIndex]);
             } else if (!allow.includes(allowed)) {
               allow.push(allowed);
             }
