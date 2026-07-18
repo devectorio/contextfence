@@ -285,11 +285,11 @@ function App() {
                 How ContextFence works <ArrowRight size={16} aria-hidden="true" />
               </button>
             </div>
-            <div className="lab-oss-links" aria-label="ContextFence open-source paths">
-              <a href="https://www.npmjs.com/package/contextfence" target="_blank" rel="noreferrer"><TerminalSquare size={15} /> Install package <ExternalLink size={13} /></a>
-              <a href="https://github.com/devectorio/contextfence/blob/main/docs/github-action.md" target="_blank" rel="noreferrer"><FileCheck2 size={15} /> Use the GitHub Action <ExternalLink size={13} /></a>
-              <a href="https://github.com/devectorio/contextfence" target="_blank" rel="noreferrer"><GitFork size={15} /> Star on GitHub <ExternalLink size={13} /></a>
-            </div>
+            <nav className="lab-oss-links" aria-label="ContextFence open-source paths">
+              <a href="https://www.npmjs.com/package/contextfence" target="_blank" rel="noreferrer"><TerminalSquare size={15} aria-hidden="true" /> Install package <ExternalLink size={13} aria-hidden="true" /></a>
+              <a href="https://github.com/devectorio/contextfence/blob/main/docs/github-action.md" target="_blank" rel="noreferrer"><FileCheck2 size={15} aria-hidden="true" /> Use the GitHub Action <ExternalLink size={13} aria-hidden="true" /></a>
+              <a href="https://github.com/devectorio/contextfence" target="_blank" rel="noreferrer"><GitFork size={15} aria-hidden="true" /> Star on GitHub <ExternalLink size={13} aria-hidden="true" /></a>
+            </nav>
             <p className="lab-hero__note"><LockKeyhole size={14} aria-hidden="true" /> Synthetic data only. No target credentials, prompts, or production systems are involved.</p>
           </div>
 
