@@ -53,7 +53,7 @@ Requirements: Node.js 22.14 or newer.
 Install the CLI, fetch the network-free example suite, and run it:
 
 ```bash
-npm install -g contextfence
+npm install -g contextfence@0.1.0
 contextfence --version
 
 curl -fsSLO https://raw.githubusercontent.com/devectorio/contextfence/v0.1.0/examples/contracts/mock.boundary.yaml
@@ -73,7 +73,7 @@ To work from source instead, see [Development](#development).
 Validate a contract without contacting its target:
 
 ```bash
-node dist/package/cli.js test boundary.yaml --dry-run
+contextfence test mock.boundary.yaml --dry-run
 ```
 
 See [the examples guide](https://github.com/devectorio/contextfence/blob/main/examples/README.md) for a passing mock suite, a deliberately failing cache fixture, an authorized staging template, and synthetic seed documents.
