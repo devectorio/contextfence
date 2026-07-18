@@ -21,7 +21,7 @@ flowchart LR
     Simulator[Synthetic UI simulator] --> Lab[Interactive regression lab]
 ```
 
-The CLI and interactive lab share a problem domain, but they have different execution paths in `v0.1.0`:
+The CLI and interactive lab share a problem domain, but they have different execution paths in the current release:
 
 - The CLI loads YAML contracts and invokes mock or OpenAI-compatible targets.
 - The browser lab runs typed, deterministic scenarios entirely in the client. It does not receive target credentials and does not call the CLI.
@@ -143,7 +143,7 @@ secret store -> process environment -> contract interpolation -> request headers
 target response -> normalized evidence -> findings -> selected reporter -> artifact retention
 ```
 
-ContextFence does not persist a central run database in `v0.1.0`. The chosen output file and CI logs are the durable artifacts. The open-source CLI does not need a hosted ContextFence account.
+ContextFence does not persist a central run database. The chosen output file and CI logs are the durable artifacts. The open-source CLI does not need a hosted ContextFence account.
 
 Known configured credentials are redacted, but arbitrary secrets returned by the target cannot be identified reliably. Use synthetic canaries, not real secrets, and configure CI artifact retention deliberately.
 

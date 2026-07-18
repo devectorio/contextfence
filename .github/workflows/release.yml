@@ -58,6 +58,18 @@ jobs:
             sha256sum "$filename" > "$filename.sha256"
           )
 
+      - name: Stage reviewed release notes
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          notes="docs/releases/${RELEASE_VERSION}.md"
+          [[ -f "$notes" ]] || {
+            echo "::error::Missing reviewed release notes: $notes"
+            exit 1
+          }
+          cp "$notes" release/RELEASE_NOTES.md
+
       - name: Smoke-test the packed CLI
         shell: bash
         run: |
@@ -78,6 +90,7 @@ jobs:
           path: |
             release/*.tgz
             release/*.sha256
+            release/RELEASE_NOTES.md
           if-no-files-found: error
           retention-days: 7
 
@@ -150,11 +163,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TARBALL: ${{ steps.candidate.outputs.tarball }}
           CHECKSUM: ${{ steps.candidate.outputs.checksum }}
+          NOTES: release/RELEASE_NOTES.md
         run: >-
           gh release create "${{ github.ref_name }}"
           "$TARBALL"
           "$CHECKSUM"
-          --generate-notes
+          --notes-file "$NOTES"
           --title "ContextFence ${{ github.ref_name }}"
           --verify-tag
           --repo "${{ github.repository }}"

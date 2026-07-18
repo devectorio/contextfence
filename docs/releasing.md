@@ -53,7 +53,7 @@ npm trust github contextfence \
   --allow-publish
 
 npm trust list contextfence
-npm deprecate contextfence@0.0.0-bootstrap.0 "Bootstrap placeholder; install 0.1.0 or newer."
+npm deprecate contextfence@0.0.0-bootstrap.0 "Bootstrap placeholder; install the current stable release."
 ```
 
 The repository, workflow filename, environment name, and package `repository.url` are case-sensitive identity claims. A mismatch makes OIDC publication fail. Once trusted publishing succeeds, configure npm publishing access to require two-factor authentication and disallow traditional tokens.
@@ -95,9 +95,12 @@ Create the release from the exact reviewed `main` commit. A signed tag is prefer
 git switch main
 git pull --ff-only
 git status --short
-git tag -s v0.1.0 -m "ContextFence v0.1.0"
-git push origin v0.1.0
+VERSION="$(node -p \"require('./package.json').version\")"
+git tag -s "v$VERSION" -m "ContextFence v$VERSION"
+git push origin "v$VERSION"
 ```
+
+Before tagging, add `docs/releases/v<version>.md`. The release preflight requires it and the workflow publishes that reviewed copy as the GitHub Release body; release notes are not generated from pull-request titles.
 
 Pushing the tag starts `.github/workflows/release.yml`. The job:
 
@@ -107,7 +110,7 @@ Pushing the tag starts `.github/workflows/release.yml`. The job:
 4. Installs the tarball into a clean temporary directory and smoke-tests the packed CLI.
 5. Produces a SHA-256 checksum and GitHub build-provenance attestation.
 6. Publishes to npm with short-lived OIDC credentials and npm provenance.
-7. Creates the GitHub Release only after npm publication succeeds.
+7. Creates the GitHub Release only after npm publication succeeds, using the reviewed release-note file.
 
 The container workflow independently builds `linux/amd64` and `linux/arm64`, attaches SBOM and provenance metadata, and publishes version and major/minor tags to GHCR.
 
@@ -116,18 +119,29 @@ Never move an existing release tag or reuse a published npm version. Fix the sou
 ## Verify after publication
 
 ```bash
-npm view contextfence@0.1.0 name version repository dist.integrity --json
+VERSION="$(node -p \"require('./package.json').version\")"
+npm view "contextfence@$VERSION" name version repository dist.integrity --json
 
 verify_directory="$(mktemp -d)"
-npm install --prefix "$verify_directory" contextfence@0.1.0
+npm install --prefix "$verify_directory" "contextfence@$VERSION"
 "$verify_directory/node_modules/.bin/contextfence" --version
 "$verify_directory/node_modules/.bin/contextfence" test examples/contracts/mock.boundary.yaml
 
-gh release view v0.1.0 --repo devectorio/contextfence
-gh attestation verify contextfence-0.1.0.tgz --repo devectorio/contextfence
+gh release download "v$VERSION" \
+  --repo devectorio/contextfence \
+  --dir "$verify_directory" \
+  --pattern "contextfence-$VERSION.tgz" \
+  --pattern "contextfence-$VERSION.tgz.sha256"
+(
+  cd "$verify_directory"
+  sha256sum -c "contextfence-$VERSION.tgz.sha256"
+)
+gh attestation verify "$verify_directory/contextfence-$VERSION.tgz" \
+  --repo devectorio/contextfence \
+  --signer-workflow devectorio/contextfence/.github/workflows/release.yml
 
-docker pull ghcr.io/devectorio/contextfence:0.1.0
-docker inspect ghcr.io/devectorio/contextfence:0.1.0
+docker pull "ghcr.io/devectorio/contextfence:$VERSION"
+docker inspect "ghcr.io/devectorio/contextfence:$VERSION"
 ```
 
 Also confirm the npm provenance link resolves to the tagged public workflow and that the GitHub Pages deployment loads assets beneath `/contextfence/`.

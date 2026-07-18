@@ -6,7 +6,7 @@ ContextFence is an open-source regression harness for proving that people, teams
 
 Write an identity boundary as YAML, run it against an OpenAI-compatible RAG endpoint, and fail CI when a response or citation crosses the line. ContextFence uses deterministic assertions over observable content and source IDs; it does not ask one model to judge another model's safety.
 
-[Try the synthetic regression lab](https://devectorio.github.io/contextfence/) · [Read the Action guide](https://github.com/devectorio/contextfence/blob/main/docs/github-action.md) · [Explore the architecture](https://github.com/devectorio/contextfence/blob/main/docs/architecture.md)
+[Try the synthetic regression lab](https://devectorio.github.io/contextfence/) · [Read the Action guide](https://github.com/devectorio/contextfence/blob/main/docs/github-action.md) · [Scope a Boundary Baseline](https://github.com/devectorio/contextfence/blob/main/docs/boundary-baseline.md) · [Explore the architecture](https://github.com/devectorio/contextfence/blob/main/docs/architecture.md)
 
 ![ContextFence — prove restricted context stays restricted](https://devectorio.github.io/contextfence/og.svg)
 
@@ -25,7 +25,7 @@ A final answer can look correctly redacted after the system has already crossed 
 
 These failures span identity, ingestion, retrieval, ranking, caching, citations, and generation. Unit-testing any single layer is not enough. ContextFence makes the end-to-end boundary reviewable, repeatable, and portable across CI, scheduled staging checks, and incident reproduction.
 
-## What is in v0.1.0
+## What is in v0.2.0
 
 | Capability | Status |
 | --- | --- |
@@ -38,13 +38,13 @@ These failures span identity, ingestion, retrieval, ranking, caching, citations,
 | OpenAI-compatible black-box target adapter | Shipped |
 | Pretty, JSON, JUnit, SARIF, and portable HTML reports | Shipped |
 | Severity thresholds, bounded concurrency, aggregate probe timeouts, and explicit exit codes | Shipped |
-| Reusable exact-version GitHub Action (`devectorio/contextfence@v0.1.0`) | Shipped |
+| Reusable exact-version GitHub Action (`devectorio/contextfence@v0.2.0`) | Shipped |
 | Interactive vulnerable/remediated browser lab | Shipped |
 | Non-root production container and GitHub Pages deployment | Shipped |
 | Framework-specific evidence adapters and connector fixtures | Roadmap |
 | Hosted scheduling, history, alerts, and private control plane | Commercial direction |
 
-The `contextfence` package is published on npm, the `devectorio/contextfence@v0.1.0` Action resolves against the `v0.1.0` tag, and the demo container is on GHCR. ContextFence is an early release: the v1 contract is versioned, but backward-compatibility guarantees will firm up before `1.0.0`. The [release runbook](https://github.com/devectorio/contextfence/blob/main/docs/releasing.md) records how releases are built and attested.
+The `contextfence` package is published on npm, the `devectorio/contextfence@v0.2.0` Action resolves against the `v0.2.0` tag, and the demo container is on GHCR. ContextFence is an early release: the v1 contract is versioned, but backward-compatibility guarantees will firm up before `1.0.0`. The [release runbook](https://github.com/devectorio/contextfence/blob/main/docs/releasing.md) records how releases are built and attested.
 
 ## Quick start
 
@@ -53,17 +53,17 @@ Requirements: Node.js 22.14 or newer.
 Install the CLI, fetch the network-free example suite, and run it:
 
 ```bash
-npm install -g contextfence@0.1.0
+npm install -g contextfence@0.2.0
 contextfence --version
 
-curl -fsSLO https://raw.githubusercontent.com/devectorio/contextfence/v0.1.0/examples/contracts/mock.boundary.yaml
+curl -fsSLO https://raw.githubusercontent.com/devectorio/contextfence/v0.2.0/examples/contracts/mock.boundary.yaml
 contextfence test mock.boundary.yaml
 ```
 
 The intentionally vulnerable cache-replay example shows a real failing report:
 
 ```bash
-curl -fsSLO https://raw.githubusercontent.com/devectorio/contextfence/v0.1.0/examples/contracts/vulnerable-cache.boundary.yaml
+curl -fsSLO https://raw.githubusercontent.com/devectorio/contextfence/v0.2.0/examples/contracts/vulnerable-cache.boundary.yaml
 contextfence test vulnerable-cache.boundary.yaml
 # exits 1 after reporting critical boundary violations
 ```
@@ -239,10 +239,12 @@ contextfence generate <access-manifest.yaml> [options]
 ```
 
 ```bash
-contextfence generate examples/manifests/northstar-access.yaml --output boundary.yaml
+curl -fsSLO https://raw.githubusercontent.com/devectorio/contextfence/v0.2.0/examples/manifests/northstar-access.yaml
+contextfence generate northstar-access.yaml --adapter mock --output boundary.yaml
+contextfence test boundary.yaml --dry-run
 ```
 
-A manifest lists identities and, for each source, an `allow` list of the identities permitted to see it. Probe keys and canaries are derived deterministically when omitted, and the generated contract emits environment placeholders for target and identity credentials so no secret is written to disk. The output is an ordinary boundary contract—review it, seed each canary into a disposable test index, then run it with `contextfence test`. Live connector imports remain a commercial concern, but the manifest they would produce is a stable, portable seam.
+A manifest lists identities and, for each source, an `allow` list of the identities permitted to see it. Probe keys and canaries are derived deterministically when omitted, and the generated contract emits environment placeholders for target and identity credentials so no secret is written to disk. The command above uses `--adapter mock` so a global install can validate the generated contract without a live target. Change the adapter, add target settings, seed each canary into a disposable test index, and review the result before a live `contextfence test`. Live connector imports remain a commercial concern, but the manifest they would produce is a stable, portable seam.
 
 ## GitHub Actions
 
@@ -254,10 +256,10 @@ permissions:
 
 steps:
   - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-  - uses: devectorio/contextfence@v0.1.0
+  - uses: devectorio/contextfence@v0.2.0
     with:
       contract: examples/contracts/mock.boundary.yaml
-      version: 0.1.0
+      version: 0.2.0
       format: json
       output: reports/contextfence.json
 ```
@@ -294,7 +296,7 @@ Open [http://localhost:5173](http://localhost:5173).
 The demo builds as a non-root static container on port `8080` and versioned images are published to GHCR:
 
 ```bash
-docker run --rm --read-only --tmpfs /tmp -p 8080:8080 ghcr.io/devectorio/contextfence:0.1.0
+docker run --rm --read-only --tmpfs /tmp -p 8080:8080 ghcr.io/devectorio/contextfence:0.2.0
 ```
 
 To build the exact source locally instead:
@@ -361,7 +363,7 @@ A sustainable paid layer can coordinate the enterprise work around that open cor
 | Repository workflow | Slack/Teams alerts, SSO/SCIM, approvals, and private runners |
 | Public examples and docs | Support, implementation help, and managed upgrades |
 
-[Devector](https://www.devector.io/) can also deliver fixed-scope RAG boundary assessments using the same public contract format: map identities and sources, seed synthetic canaries, reproduce failures, verify remediation, and leave the customer with executable regression coverage.
+[Devector](https://www.devector.io/) can also deliver a fixed-scope [ContextFence Boundary Baseline](https://github.com/devectorio/contextfence/blob/main/docs/boundary-baseline.md) using the same public contract format: map identities and sources, seed synthetic canaries, reproduce failures, verify remediation, and leave the customer with executable regression coverage.
 
 That creates three complementary routes to revenue—hosted developer tooling, enterprise control plane, and expert assessments—without withholding the useful local core.
 

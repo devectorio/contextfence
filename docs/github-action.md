@@ -2,7 +2,7 @@
 
 The repository ships a composite Action that installs one exact ContextFence npm version and runs a boundary contract. Keep the Action ref and its `version` input pinned during reviewable releases.
 
-> **Release status:** the `v0.1.0` tag and the `contextfence@0.1.0` npm package are published, so the versioned examples below work as written. Pin the Action to a tag or commit SHA you have reviewed.
+> **Release status:** the `v0.2.0` tag and the `contextfence@0.2.0` npm package are published, so the versioned examples below work as written. Pin the Action to a tag or commit SHA you have reviewed.
 
 ## Pull request workflow with no secrets
 
@@ -23,10 +23,10 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Validate the deterministic boundary suite
-        uses: devectorio/contextfence@v0.1.0
+        uses: devectorio/contextfence@v0.2.0
         with:
           contract: examples/contracts/mock.boundary.yaml
-          version: 0.1.0
+          version: 0.2.0
           format: json
           output: reports/contextfence.json
           fail-on: low
@@ -70,7 +70,7 @@ jobs:
           persist-credentials: false
 
       - name: Test the protected staging target
-        uses: devectorio/contextfence@v0.1.0
+        uses: devectorio/contextfence@v0.2.0
         env:
           CONTEXTFENCE_TARGET_URL: https://rag-staging.example.com
           CONTEXTFENCE_TARGET_API_KEY: ${{ secrets.CONTEXTFENCE_TARGET_API_KEY }}
@@ -79,7 +79,7 @@ jobs:
         with:
           contract: boundaries/staging.yaml
           target: https://rag-staging.example.com
-          version: 0.1.0
+          version: 0.2.0
           format: json
           output: reports/contextfence.json
           fail-on: high
@@ -100,7 +100,7 @@ Protect `rag-staging` with required reviewers, restrict deployment branches to `
 | `concurrency` | `4` | Maximum concurrent probes. |
 | `dry-run` | `false` | Validate and plan without calling the target. |
 | `working-directory` | `.` | Directory beneath `GITHUB_WORKSPACE` in which to run. |
-| `version` | `0.1.0` | Exact npm package version to execute. Dist-tags and ranges are rejected. |
+| `version` | `0.2.0` | Exact npm package version to execute. Dist-tags and ranges are rejected. |
 
 The `report` output is the report's absolute path, or an empty string when file output is disabled.
 
@@ -119,10 +119,10 @@ steps:
   - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
   - name: Run ContextFence
-    uses: devectorio/contextfence@v0.1.0
+    uses: devectorio/contextfence@v0.2.0
     with:
       contract: boundaries/staging.yaml
-      version: 0.1.0
+      version: 0.2.0
       format: sarif
       output: reports/contextfence.sarif
 
