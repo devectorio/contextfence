@@ -41,21 +41,14 @@ docker build \
   -t contextfence:subpath .
 ```
 
-The GHCR workflow is configured to publish multi-architecture images from `main` and semantic-version tags. The first versioned image does not exist until the npm bootstrap and `v0.1.0` tag are complete; build from source in the meantime:
+The GHCR workflow publishes multi-architecture images from `main` and semantic-version tags. Prefer an immutable versioned image rather than `main`:
 
 ```bash
-docker build -t contextfence:local .
-docker run --rm -p 8080:8080 contextfence:local
+docker pull ghcr.io/devectorio/contextfence:0.2.0
+docker run --rm -p 8080:8080 ghcr.io/devectorio/contextfence:0.2.0
 ```
 
-After the first release, consume a versioned image rather than `main`:
-
-```bash
-docker pull ghcr.io/devectorio/contextfence:0.1.0
-docker run --rm -p 8080:8080 ghcr.io/devectorio/contextfence:0.1.0
-```
-
-GHCR packages are private on first creation in some repository configurations. Make the package public after the first successful push and link it to the repository.
+The public GHCR package is linked to this repository. For reproducible deployments, record the image digest alongside the release and SBOM/provenance artifacts.
 
 ## Runtime posture
 

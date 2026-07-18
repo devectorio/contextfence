@@ -23,7 +23,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { useRef, useState } from 'react'
-import { defaultFaults, demoSystem, safeFaults } from './data'
+import { demoSystem, safeFaults, starterFaults } from './data'
 import type {
   FaultConfig,
   FaultMode,
@@ -79,13 +79,9 @@ const faultSpecs: FaultSpec[] = [
   },
 ]
 
-const sourceSetup = `git clone https://github.com/devectorio/contextfence.git
-cd contextfence
-corepack enable
-corepack prepare pnpm@11.0.8 --activate
-pnpm install --frozen-lockfile
-pnpm build:package
-node dist/package/cli.js test examples/contracts/mock.boundary.yaml`
+const quickStart = `npm install -g contextfence@0.2.0
+curl -fsSLO https://raw.githubusercontent.com/devectorio/contextfence/v0.2.0/examples/contracts/mock.boundary.yaml
+contextfence test mock.boundary.yaml`
 
 function assertionSubject(assertion: ProbeAssertion) {
   if (assertion.kind === 'source') {
@@ -163,14 +159,15 @@ function Trace({ probe }: { probe: ProbeResult }) {
 }
 
 function App() {
-  const [faults, setFaults] = useState<FaultConfig>(() => ({ ...defaultFaults }))
-  const [executedFaults, setExecutedFaults] = useState<FaultConfig>(() => ({ ...defaultFaults }))
-  const [suite, setSuite] = useState(() => evaluateSuite(demoSystem, defaultFaults))
+  const [faults, setFaults] = useState<FaultConfig>(() => ({ ...starterFaults }))
+  const [executedFaults, setExecutedFaults] = useState<FaultConfig>(() => ({ ...starterFaults }))
+  const [suite, setSuite] = useState(() => evaluateSuite(demoSystem, starterFaults))
   const [selectedProbeId, setSelectedProbeId] = useState('probe-cache-isolation')
   const [running, setRunning] = useState(false)
   const [hasRun, setHasRun] = useState(false)
   const [toast, setToast] = useState<Toast | null>(null)
   const runSequence = useRef(0)
+  const resultsRef = useRef<HTMLElement>(null)
 
   const selectedProbe =
     suite.probes.find((probe) => probe.id === selectedProbeId) ??
@@ -178,13 +175,24 @@ function App() {
     suite.probes[0]
   const enabledFaultCount = faultSpecs.filter((fault) => faults[fault.key]).length
   const hasUnrunChanges = faultSpecs.some((fault) => faults[fault.key] !== executedFaults[fault.key])
+  const heroRunLabel = running
+    ? 'Running deterministic checks…'
+    : hasUnrunChanges
+      ? 'Run the updated 8-check demo'
+      : faults['identity-blind-cache']
+        ? 'Watch the cache leak'
+        : 'Run the 8-check demo'
 
   function notify(message: string, tone: ToastTone = 'success') {
     setToast({ message, tone })
     window.setTimeout(() => setToast(null), 2800)
   }
 
-  async function runSuite(nextFaults: FaultConfig = faults, preferredProbeId?: string) {
+  async function runSuite(
+    nextFaults: FaultConfig = faults,
+    preferredProbeId?: string,
+    revealResults = false,
+  ) {
     if (running) return
     const sequence = ++runSequence.current
     setRunning(true)
@@ -199,6 +207,12 @@ function App() {
     setSelectedProbeId(preferredProbe?.id ?? firstFailure?.id ?? nextSuite.probes[0].id)
     setHasRun(true)
     setRunning(false)
+    if (revealResults) {
+      window.requestAnimationFrame(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        resultsRef.current?.focus({ preventScroll: true })
+      })
+    }
     notify(
       nextSuite.violationCount
         ? `${nextSuite.violationCount} permission checks found a boundary failure`
@@ -218,12 +232,12 @@ function App() {
     void runSuite({ ...safeFaults }, 'probe-cache-isolation')
   }
 
-  async function copySourceSetup() {
+  async function copyQuickStart() {
     try {
-      await navigator.clipboard.writeText(sourceSetup)
-      notify('Source setup copied')
+      await navigator.clipboard.writeText(quickStart)
+      notify('Published quick start copied')
     } catch {
-      notify('Copy is unavailable in this browser — use the source link instead')
+      notify('Copy is unavailable in this browser — use the install link instead')
     }
   }
 
@@ -243,10 +257,11 @@ function App() {
         <nav aria-label="Demo navigation">
           <a href="#how-it-works">What it does</a>
           <a href="#explore">Try the lab</a>
-          <a href="#run-in-ci">Run from source</a>
+          <a href="#run-in-ci">Install &amp; CI</a>
+          <a href="#assessment">Assessment</a>
         </nav>
         <a className="lab-source-link" href="https://github.com/devectorio/contextfence" target="_blank" rel="noreferrer">
-          <GitFork size={15} aria-hidden="true" /> Source <ExternalLink size={13} aria-hidden="true" />
+          <GitFork size={15} aria-hidden="true" /> GitHub <ExternalLink size={13} aria-hidden="true" />
         </a>
       </header>
 
@@ -259,17 +274,22 @@ function App() {
               ContextFence turns declared identity × source boundaries into deterministic regression tests. It checks whether a target exposes unauthorized content or source evidence — not just whether a final answer looks redacted.
             </p>
             <p className="lab-hero__explain">
-              This browser-only lab begins with a deliberately broken simulation. Toggle common implementation mistakes, run the same eight checks, then inspect the simulated source, cache, and retrieval path that crossed the boundary.
+              Start with one deliberately broken cache key: Finance primes a result, then Newsroom asks the same question. Run the eight checks, inspect the exact simulated path that crossed the boundary, then add the other failure modes.
             </p>
             <div className="lab-actions">
-              <button className="lab-button lab-button--primary" onClick={() => void runSuite()} disabled={running}>
+              <button className="lab-button lab-button--primary" onClick={() => void runSuite(faults, 'probe-cache-isolation', true)} disabled={running}>
                 {running ? <TestTube2 className="lab-spin" size={17} aria-hidden="true" /> : <Play size={16} fill="currentColor" aria-hidden="true" />}
-                {running ? 'Running deterministic checks…' : hasUnrunChanges ? 'Run the updated 8-check demo' : 'Run the 8-check demo'}
+                {heroRunLabel}
               </button>
               <button className="lab-button lab-button--quiet" onClick={jumpToHowItWorks}>
                 How ContextFence works <ArrowRight size={16} aria-hidden="true" />
               </button>
             </div>
+            <nav className="lab-oss-links" aria-label="ContextFence open-source paths">
+              <a href="https://www.npmjs.com/package/contextfence" target="_blank" rel="noreferrer"><TerminalSquare size={15} aria-hidden="true" /> Install package <ExternalLink size={13} aria-hidden="true" /></a>
+              <a href="https://github.com/devectorio/contextfence/blob/main/docs/github-action.md" target="_blank" rel="noreferrer"><FileCheck2 size={15} aria-hidden="true" /> Use the GitHub Action <ExternalLink size={13} aria-hidden="true" /></a>
+              <a href="https://github.com/devectorio/contextfence" target="_blank" rel="noreferrer"><GitFork size={15} aria-hidden="true" /> Star on GitHub <ExternalLink size={13} aria-hidden="true" /></a>
+            </nav>
             <p className="lab-hero__note"><LockKeyhole size={14} aria-hidden="true" /> Synthetic data only. No target credentials, prompts, or production systems are involved.</p>
           </div>
 
@@ -316,15 +336,15 @@ function App() {
           <section className="lab-config lab-card">
             <div className="lab-card__heading">
               <div>
-                <p>1. Configure a deliberately broken target</p>
-                <h2>Explore common RAG permission mistakes.</h2>
+                <p>1. Reproduce a boundary failure</p>
+                <h2>Start with a shared cache key.</h2>
               </div>
               <span className={enabledFaultCount ? 'lab-count lab-count--danger' : 'lab-count'}>
                 {enabledFaultCount ? `${enabledFaultCount} fault${enabledFaultCount === 1 ? '' : 's'} enabled` : 'safe configuration'}
               </span>
             </div>
             <p className="lab-card__intro">
-              These switches simulate implementation errors; they do not change a real service. Change one, then rerun the exact same contract to see which boundary moves.
+              Each switch simulates one implementation defect; none changes a real service. The baseline enables only the cache fault, so its Finance-to-Newsroom replay is easy to trace before you add more variables.
             </p>
             <div className="lab-fault-list">
               {faultSpecs.map((spec) => (
@@ -348,10 +368,10 @@ function App() {
             </div>
           </section>
 
-          <section className="lab-results lab-card">
+          <section className="lab-results lab-card" ref={resultsRef} tabIndex={-1}>
             <div className="lab-card__heading">
               <div>
-                <p>{hasUnrunChanges ? 'Configuration changed — results are from the last run.' : hasRun ? 'Fresh synthetic run' : 'Starting synthetic baseline'}</p>
+                <p>{hasUnrunChanges ? '2. Configuration changed — results are from the last run.' : hasRun ? '2. Fresh synthetic run' : '2. Baseline: one shared-cache fault is enabled'}</p>
                 <h2 aria-live="polite" aria-atomic="true">{suite.violationCount ? `${suite.violationCount} of ${suite.probes.length} permission checks failed.` : `All ${suite.probes.length} permission checks passed.`}</h2>
               </div>
               <span className={suite.violationCount ? 'lab-status lab-status--danger' : 'lab-status lab-status--safe'}>
@@ -388,7 +408,7 @@ function App() {
         <section className="lab-evidence lab-card" aria-label="Selected permission-check evidence">
           <div className="lab-card__heading">
             <div>
-              <p>2. Inspect the proof</p>
+              <p>3. Inspect the proof</p>
               <h2>{selectedProbe.name}</h2>
             </div>
             <span className={selectedProbe.status === 'failed' ? 'lab-status lab-status--danger' : 'lab-status lab-status--safe'}>
@@ -447,22 +467,42 @@ function App() {
 
         <section className="lab-run-source" id="run-in-ci">
           <div>
-            <p className="lab-eyebrow"><TerminalSquare size={15} /> Run the 2-probe starter contract from source</p>
-            <h2>Use the production runner in CI, against systems you are authorized to test.</h2>
+            <p className="lab-eyebrow"><TerminalSquare size={15} /> Install the published runner</p>
+            <h2>Put an identity × source contract in CI today.</h2>
             <p>
-              This page is a synthetic explainer. The open-source runner executes versioned contracts, evaluates response content and source metadata exposed by the target, and produces JSON, JUnit, SARIF, and HTML reports. The first npm release is being prepared; until it is published, run it directly from source.
+              This page is a synthetic explainer. The Apache-2.0 runner is published on npm, executes versioned contracts against systems you are authorized to test, and produces JSON, JUnit, SARIF, and HTML evidence. Start with the network-free mock suite, then use the pinned GitHub Action for a real staging boundary.
             </p>
             <div className="lab-actions">
-              <button className="lab-button lab-button--primary" onClick={() => void copySourceSetup()}><Copy size={16} /> Copy source setup</button>
-              <a className="lab-button lab-button--quiet" href="https://github.com/devectorio/contextfence" target="_blank" rel="noreferrer">View source <ExternalLink size={16} /></a>
+              <button className="lab-button lab-button--primary" onClick={() => void copyQuickStart()}><Copy size={16} /> Copy quick start</button>
+              <a className="lab-button lab-button--quiet" href="https://github.com/devectorio/contextfence/blob/main/docs/github-action.md" target="_blank" rel="noreferrer">Use the GitHub Action <ExternalLink size={16} /></a>
             </div>
           </div>
-          <pre aria-label="Run the two-probe ContextFence starter contract from source"><code>{sourceSetup}</code></pre>
+          <pre aria-label="Install ContextFence and run the network-free starter contract"><code>{quickStart}</code></pre>
+        </section>
+
+        <section className="lab-assessment" id="assessment">
+          <div className="lab-assessment__intro">
+            <p className="lab-eyebrow"><ShieldCheck size={15} /> Fixed-scope implementation help</p>
+            <h2>Turn a promising demo into a release control.</h2>
+            <p>
+              Keep the open-source runner either way. For teams with a live RAG system, Devector can deliver a <strong>ContextFence Boundary Baseline</strong>: a fixed-scope, one-to-two-week engagement that leaves behind an identity × source map, synthetic canaries, executable checks, and evidence your engineers can rerun.
+            </p>
+            <div className="lab-actions">
+              <a className="lab-button lab-button--primary" href="https://www.devector.io/contact" target="_blank" rel="noreferrer">Scope a Boundary Baseline <ArrowRight size={16} /></a>
+              <a className="lab-button lab-button--quiet" href="mailto:dev@devector.io?subject=ContextFence%20design%20partner">Discuss the design-partner track <ExternalLink size={16} /></a>
+            </div>
+            <p className="lab-assessment__note"><strong>Design-partner track:</strong> run history, private runners, connector workflows, and evidence retention are a future hosted direction—not a service being claimed today.</p>
+          </div>
+          <ol className="lab-assessment__steps">
+            <li><span>01</span><div><strong>Map the boundary</strong><p>Identify test identities, sensitive sources, access changes, and the evidence the target can expose.</p></div></li>
+            <li><span>02</span><div><strong>Prove the failure modes</strong><p>Seed safe canaries and build an initial 20–40 deterministic checks around the paths that matter.</p></div></li>
+            <li><span>03</span><div><strong>Leave with a gate</strong><p>Hand over a reviewed CI change, portable evidence report, remediation priorities, and an engineer walkthrough.</p></div></li>
+          </ol>
         </section>
       </main>
 
       <footer className="lab-footer">
-        <span>ContextFence is Apache-2.0 open source.</span>
+        <span>ContextFence is Apache-2.0 open source, not a security certification.</span>
         <a href="https://www.devector.io/" target="_blank" rel="noreferrer">A Devector project <ExternalLink size={13} /></a>
       </footer>
 

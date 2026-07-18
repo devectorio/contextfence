@@ -1,6 +1,6 @@
 import type { BoundarySeverity } from "../contract/types";
 
-export const CONTEXTFENCE_VERSION = "0.1.0";
+export const CONTEXTFENCE_VERSION = "0.2.0";
 export const CLI_FORMATS = ["pretty", "json", "junit", "sarif", "html"] as const;
 export type CliFormat = (typeof CLI_FORMATS)[number];
 export type FailOnSeverity = "none" | BoundarySeverity;
@@ -229,4 +229,3 @@ Options:
   --dry-run               Parse and validate without contacting the target
   -h, --help              Show this help
 `;
-

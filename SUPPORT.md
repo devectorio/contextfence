@@ -2,7 +2,7 @@
 
 ## Community support
 
-Use the repository issue forms for reproducible bugs, feature proposals, and new synthetic threat fixtures. Include the ContextFence version, operating system, Node.js version, a minimal redacted contract, the command you ran, and the observed exit code.
+Use GitHub Discussions for questions, implementation patterns, and early design ideas. Use the repository issue forms for reproducible bugs, feature proposals, and new synthetic threat fixtures. Include the ContextFence version, operating system, Node.js version, a minimal redacted contract, the command you ran, and the observed exit code.
 
 Do not attach live credentials, confidential prompts, raw target responses, or sensitive reports. Report suspected vulnerabilities privately through the process in [SECURITY.md](SECURITY.md).
 

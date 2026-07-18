@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If ContextFence supports your work, please cite this software."
+type: software
+title: "ContextFence"
+version: 0.2.0
+date-released: 2026-07-18
+authors:
+  - name: "Devector Consulting Ltd"
+repository-code: "https://github.com/devectorio/contextfence"
+url: "https://www.devector.io/labs/contextfence"
+license: Apache-2.0

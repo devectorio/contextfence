@@ -49,7 +49,7 @@ describe("CLI main command", () => {
     expect(help.output()).toContain("contextfence test <boundary.yaml>");
     const version = memoryIO();
     expect(await runCli(["--version"], version.io)).toBe(0);
-    expect(version.output()).toBe("0.1.0\n");
+    expect(version.output()).toBe("0.2.0\n");
   });
 
   it("writes JSON and honors the finding threshold", async () => {

@@ -579,6 +579,14 @@ export const defaultFaults: FaultConfig = {
   "cross-boundary-chunks": true,
 };
 
+/** The browser lab starts with one clear cache-isolation failure. */
+export const starterFaults: FaultConfig = {
+  "post-retrieval-filter": false,
+  "identity-blind-cache": true,
+  "acl-sync-delay": false,
+  "cross-boundary-chunks": false,
+};
+
 export const safeFaults: FaultConfig = {
   "post-retrieval-filter": false,
   "identity-blind-cache": false,

@@ -46,7 +46,7 @@ inputs:
   version:
     description: Exact ContextFence npm package version to execute.
     required: false
-    default: 0.1.0
+    default: 0.2.0
 
 outputs:
   report:

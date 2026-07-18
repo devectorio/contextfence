@@ -134,7 +134,7 @@ describe("GitHub Action workspace path confinement", () => {
           INPUT_OUTPUT: "report.json",
           INPUT_TARGET: "",
           INPUT_TIMEOUT: "100",
-          INPUT_VERSION: "0.1.0",
+          INPUT_VERSION: "0.2.0",
           INPUT_WORKING_DIRECTORY: ".",
         },
       });

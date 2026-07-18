@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import process from 'node:process'
 
@@ -168,6 +168,8 @@ const packedFiles = new Set(pack.files.map(({ path }) => path))
 for (const required of [
   'LICENSE',
   'README.md',
+  'CITATION.cff',
+  'docs/boundary-baseline.md',
   'CONTRIBUTING.md',
   'CODE_OF_CONDUCT.md',
   'GOVERNANCE.md',
@@ -183,6 +185,20 @@ for (const required of [
   packageJson.bin.contextfence.replace(/^\.\//, ''),
 ]) {
   if (!packedFiles.has(required)) fail(`npm tarball is missing ${required}`)
+}
+
+const citation = readFileSync(resolve(root, 'CITATION.cff'), 'utf8')
+if (!citation.includes(`version: ${version}`)) {
+  fail(`CITATION.cff must declare release version ${version}`)
+}
+
+const releaseNotesPath = `docs/releases/v${version}.md`
+if (!existsSync(resolve(root, releaseNotesPath))) {
+  fail(`Release notes are missing: ${releaseNotesPath}`)
+}
+const releaseNotes = readFileSync(resolve(root, releaseNotesPath), 'utf8')
+if (!releaseNotes.includes(`ContextFence v${version}`)) {
+  fail(`${releaseNotesPath} must identify ContextFence v${version}`)
 }
 
 const readme = readFileSync(resolve(root, 'README.md'), 'utf8')
