@@ -4,7 +4,7 @@ ARG BUILDPLATFORM=linux/amd64
 
 # The compiled Vite site is architecture-independent. Keep this stage native to
 # the Buildx host so multi-architecture publishing does not run pnpm under QEMU.
-FROM --platform=$BUILDPLATFORM node:22.14.0-alpine@sha256:9bef0ef1e268f60627da9ba7d7605e8831d5b56ad07487d24d1aa386336d1944 AS build
+FROM --platform=$BUILDPLATFORM node:26.5.0-alpine@sha256:e88a35be04478413b7c71c455cd9865de9b9360e1f43456be5951032d7ac1a66 AS build
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ ARG VITE_BASE=/
 ARG VITE_SITE_URL=https://devectorio.github.io/contextfence/
 RUN pnpm typecheck && VITE_SITE_URL="${VITE_SITE_URL}" pnpm exec vite build --base="${VITE_BASE}"
 
-FROM nginxinc/nginx-unprivileged:1.28-alpine@sha256:7377697a821c131a924a7105fafbe7414db4e9fcc77a6f08f776f33f141ec3f8 AS runtime
+FROM nginxinc/nginx-unprivileged:1.31-alpine@sha256:a718212f9cf21e241f14067333000a3f0930292f5354fe0db269e9a2a2596b9e AS runtime
 
 LABEL org.opencontainers.image.title="ContextFence" \
       org.opencontainers.image.description="RAG permission boundary regression lab" \
